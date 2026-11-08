@@ -31,7 +31,7 @@ async function fetchAll(build) {
 async function q(build) { const { data, error } = await build(); return error ? null : data || []; }
 async function cargar() {
   const desde = sumar(hoy(), -400);
-  const [ob, rep, pls, rub, subs, spl, gar, rdis, actas, mods, avel, avreg] = await Promise.all([
+  const [ob, rep, pls, rub, subs, spl, gar, rdis, actas, mods, avel, avreg, gas, cmeta] = await Promise.all([
     q(() => sb.from("obras").select("*").eq("activa", true).order("nombre")),
     fetchAll(() => sb.from("reportes").select("obra_id,numero,fecha,datos").gte("fecha", desde).order("fecha")),
     q(() => sb.from("planillas").select("obra_id,numero,fecha,estado,totales").order("numero")),
@@ -43,11 +43,13 @@ async function cargar() {
     q(() => sb.from("actas").select("obra_id,numero,fecha,acuerdos")),
     q(() => sb.from("modelos").select("obra_id,elementos,creado").order("creado")),
     fetchAll(() => sb.from("avance_elementos").select("obra_id,estado,pct")),
-    q(() => sb.from("avance_registros").select("obra_id,fecha,estado,pct,resumen,niveles,fotos,total").gte("fecha", sumar(hoy(), -120)).order("fecha"))
+    q(() => sb.from("avance_registros").select("obra_id,fecha,estado,pct,resumen,niveles,fotos,total").gte("fecha", sumar(hoy(), -120)).order("fecha")),
+    fetchAll(() => sb.from("gastos").select("obra_id,monto")),
+    q(() => sb.from("costos_meta").select("*"))
   ]);
   obras = ob || [];
-  D = { rep: rep || [], pls: pls || [], rub: rub || [], subs: subs || [], spl: spl || [], gar: gar || [], rdis: rdis || [], actas: actas || [], mods: mods || [], avel: avel || [], avreg: avreg || [],
-    mod: { pls: !!pls, subs: !!subs, rdi: !!rdis, bim: !!mods } };
+  D = { rep: rep || [], pls: pls || [], rub: rub || [], subs: subs || [], spl: spl || [], gar: gar || [], rdis: rdis || [], actas: actas || [], mods: mods || [], avel: avel || [], avreg: avreg || [], gas: gas || [], cmeta: cmeta || [],
+    mod: { pls: !!pls, subs: !!subs, rdi: !!rdis, bim: !!mods, cos: !!gas } };
   R = obras.map(resumen).sort((a, b) => ({ mal: 0, aviso: 1, ok: 2 }[a.sem] - { mal: 0, aviso: 1, ok: 2 }[b.sem]) || a.o.nombre.localeCompare(b.o.nombre, "es"));
 }
 
@@ -66,7 +68,7 @@ function resumen(o) {
   const fisico = serie.length ? serie[serie.length - 1] : null;
   const desv = fisico && plazo.pct != null ? fisico.v - plazo.pct : null;
   // avance económico (estado de pago)
-  const pls = por(D.pls), ult = pls[pls.length - 1];
+  const pls = por(D.pls), plsOk = pls.filter((p) => p.estado !== "borrador"), ult = plsOk[plsOk.length - 1];
   const rub = por(D.rub), totalPres = rub.reduce((t, r) => t + num(r.cantidad) * num(r.precio), 0);
   const eco = { total: ult && ult.totales ? num(ult.totales.total) : totalPres, acumulado: ult && ult.totales ? num(ult.totales.acumulado) : 0, ultima: ult || null, n: pls.length,
     porCobrar: pls.filter((p) => p.estado === "presentada" || p.estado === "aprobada").reduce((t, p) => t + num((p.totales || {}).liquido), 0) };
@@ -84,6 +86,15 @@ function resumen(o) {
   // subcontratos
   const subs = por(D.subs).filter((s) => s.estado !== "anulado"), spl = por(D.spl);
   const sub = { n: subs.length, monto: subs.reduce((t, s) => t + num(s.monto), 0), planillado: spl.reduce((t, p) => t + num((p.totales || {}).bruto), 0) };
+  // costos (gastos + planillas de subcontratos aprobadas o pagadas)
+  const cg = por(D.gas).reduce((t, g) => t + num(g.monto), 0), cs = spl.filter((p) => p.estado === "aprobada" || p.estado === "pagada").reduce((t, p) => t + num((p.totales || {}).bruto), 0);
+  const cm = por(D.cmeta)[0], mTot = cm ? ["materiales", "mano_obra", "subcontratos", "equipos", "indirectos", "otros"].reduce((t, k) => t + num(cm[k]), 0) : 0;
+  const cos = { real: cg + cs, margen: eco.acumulado - cg - cs, meta: mTot };
+  cos.margenPct = eco.acumulado > 0 ? cos.margen / eco.acumulado * 100 : null;
+  const av = eco.total > 0 ? eco.acumulado / eco.total : 0;
+  cos.eac = av >= 0.05 ? cos.real / av : mTot || null;
+  cos.proy = cos.eac != null && eco.total ? eco.total - cos.eac : null;
+  cos.proyPct = cos.proy != null && eco.total ? cos.proy / eco.total * 100 : null;
   // pendientes
   const gars = por(D.gar).map((g) => ({ ...g, d: g.vencimiento ? dias(H, g.vencimiento) : null }));
   const gar = { vencidas: gars.filter((g) => g.d != null && g.d < 0), porVencer: gars.filter((g) => g.d != null && g.d >= 0 && g.d <= 30) };
@@ -103,8 +114,10 @@ function resumen(o) {
   if (gar.porVencer.length) aviso.push(gar.porVencer.length + (gar.porVencer.length === 1 ? " póliza vence" : " pólizas vencen") + " en 30 días");
   if (rdi.vencidos.length) mal.push(rdi.vencidos.length + " RDI sin respuesta fuera de plazo");
   if (acu.venc.length) aviso.push(acu.venc.length + (acu.venc.length === 1 ? " acuerdo de acta vencido" : " acuerdos de actas vencidos"));
+  if (cos.real > 0 && cos.margenPct != null && cos.margenPct < 0) mal.push("Costo real sobre lo planillado (margen " + pct(cos.margenPct, 0) + ")");
+  else if (cos.meta && cos.eac != null && cos.eac > cos.meta * 1.03) aviso.push("Costo proyectado " + pct((cos.eac / cos.meta - 1) * 100, 0) + " sobre la meta");
   if (rep.incidentes) aviso.push(rep.incidentes + (rep.incidentes === 1 ? " incidente de seguridad" : " incidentes de seguridad") + " en 30 días");
-  return { o, plazo, serie, fisico, desv, eco, bim, rep, sub, gar, rdi, acu, sem: mal.length ? "mal" : aviso.length ? "aviso" : "ok", motivos: [...mal, ...aviso] };
+  return { o, plazo, serie, fisico, desv, eco, bim, rep, sub, cos, gar, rdi, acu, sem: mal.length ? "mal" : aviso.length ? "aviso" : "ok", motivos: [...mal, ...aviso] };
 }
 
 /* ---------- render ---------- */
@@ -164,6 +177,7 @@ function renderObra(m) {
     <div class="mini">${pls.map((p) => `<div><span>EP-${String(p.numero).padStart(2, "0")} · ${fmtF(p.fecha)}</span><b>${money(num((p.totales || {}).bruto))}</b><span class="pill est-${esc(p.estado)}">${esc(p.estado)}</span></div>`).join("") || `<span class="code">Sin planillas.</span>`}</div>` : `<span class="code">Programa no activado.</span>`, "/planillas?obra=" + encodeURIComponent(o.id))}
   ${card("Subcontratos", D.mod.subs ? `<div class="kv2"><span>Contratos</span><b>${r.sub.n}</b><span>Monto contratado</span><b>${money(r.sub.monto)}</b><span>Planillado</span><b>${money(r.sub.planillado)}</b></div>
     <div class="mini">${[...r.gar.vencidas, ...r.gar.porVencer].map((g) => `<div><span>${esc(g.emisor || "Póliza")} ${esc(g.numero || "")}</span><b>${money(num(g.monto))}</b><span class="pill ${g.d < 0 ? "gp-mal" : "gp-aviso"}">${g.d < 0 ? "vencida" : "vence " + fmtC(g.vencimiento)}</span></div>`).join("")}</div>` : `<span class="code">Programa no activado.</span>`, "/subcontratos?obra=" + encodeURIComponent(o.id))}
+  ${D.mod.cos ? card("Costos", `<div class="kv2"><span>Costo real</span><b>${money(r.cos.real)}</b><span>Margen a la fecha</span><b class="${r.cos.margen < 0 ? "rojo" : ""}">${money(r.cos.margen)}${r.cos.margenPct != null ? " · " + pct(r.cos.margenPct, 0) : ""}</b>${r.cos.meta ? `<span>Costo meta</span><b>${money(r.cos.meta)}</b>` : ""}<span>Margen proyectado</span><b class="${r.cos.proy < 0 ? "rojo" : ""}">${r.cos.proy != null ? money(r.cos.proy) + " · " + pct(r.cos.proyPct, 0) : "—"}</b></div>`, "/costos?obra=" + encodeURIComponent(o.id)) : ""}
   ${card("Pendientes", D.mod.rdi ? `<div class="kv2"><span>RDI abiertos</span><b>${r.rdi.abiertos.length}</b><span>RDI fuera de plazo</span><b class="${r.rdi.vencidos.length ? "rojo" : ""}">${r.rdi.vencidos.length}</b><span>Acuerdos pendientes</span><b>${r.acu.pend.length}</b><span>Acuerdos vencidos</span><b class="${r.acu.venc.length ? "rojo" : ""}">${r.acu.venc.length}</b></div>
     <div class="mini">${r.rdi.vencidos.slice(0, 3).map((x) => `<div><span>RDI-${String(x.numero).padStart(3, "0")} ${esc(x.asunto)}</span><span class="pill gp-mal">desde ${fmtC(x.plazo)}</span></div>`).join("")}</div>` : `<span class="code">Programa no activado.</span>`, "/rdi?obra=" + encodeURIComponent(o.id))}
   </div>

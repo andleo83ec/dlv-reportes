@@ -221,8 +221,8 @@ async function adjudicar() {
   if (error) return toast("No se pudo crear la obra: " + error.message);
   let aviso = "";
   if (p.rubros.length) {
-    const rows = p.rubros.map((r, i) => ({ obra_id: ob.id, codigo: r.codigo || "", descripcion: r.descripcion, unidad: r.unidad || "", cantidad: num(r.cantidad), precio: pu(r, k.factor), capitulo: r.capitulo || "", adicional: false, orden: (i + 1) * 10 }));
-    for (let i = 0; i < rows.length; i += 500) { const { error: e2 } = await sb.from("rubros").insert(rows.slice(i, i + 500)); if (e2) { aviso = " (el presupuesto no se cargó: activa Estado de pago con planillas.sql)"; break; } }
+    const rows = p.rubros.map((r, i) => ({ obra_id: ob.id, codigo: r.codigo || "", descripcion: r.descripcion, unidad: r.unidad || "", cantidad: num(r.cantidad), precio: pu(r, k.factor), costo: num(r.costo) || null, capitulo: r.capitulo || "", adicional: false, orden: (i + 1) * 10 }));
+    for (let i = 0; i < rows.length; i += 500) { let { error: e2 } = await sb.from("rubros").insert(rows.slice(i, i + 500)); if (e2 && /costo/.test(e2.message || "")) ({ error: e2 } = await sb.from("rubros").insert(rows.slice(i, i + 500).map(({ costo, ...x }) => x))); if (e2) { aviso = " (el presupuesto no se cargó: activa Estado de pago con planillas.sql)"; break; } }
   }
   const { data, error: e3 } = await sb.from("propuestas").update({ obra_id: ob.id, estado: "adjudicada", actualizado: new Date().toISOString() }).eq("id", p.id).select().single();
   if (!e3) { const i = props.findIndex((x) => x.id === data.id); props[i] = data; item = JSON.parse(JSON.stringify(data)); }

@@ -12,6 +12,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/rdi` | RDI, actas de reunión con seguimiento de acuerdos y registro de correspondencia |
 | `/tablero` | Tablero gerencial de todas las obras e informe semanal en PDF |
 | `/ciclo` | Inicio y cierre de obra: listas de arranque y cierre, recepción, balance final y encuesta al cliente |
+| `/costos` | Control de costos por obra: gastos reales, presupuesto meta, margen a la fecha y proyectado, caja |
 | `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
@@ -26,6 +27,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/tablero.sql` | Activa el tablero en el menú (no crea tablas) | Se pega una vez en Supabase → SQL Editor |
 | `supabase/propuestas.sql` | Propuestas y cotizaciones (solo administradores) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/ciclo.sql` | Inicio y cierre de obra | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/costos.sql` | Control de costos por obra | Se pega una vez en Supabase → SQL Editor, después de `planillas.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -124,3 +126,13 @@ Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (s
 4. Cada punto cumplido guarda fecha, responsable y dónde está el documento. Algunos muestran lo que la plataforma ya sabe (rubros cargados, pólizas, actas, RDI, subcontratos terminados). Se pueden agregar puntos propios de cada obra.
 5. **Encuesta al cliente** (6 criterios de 1 a 5 y si nos recomendaría) y **lecciones aprendidas**.
 6. **PDF** del protocolo de inicio o de cierre, con firmas.
+
+## Control de costos por obra (`/costos`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/costos.sql` (crea gastos y metas, agrega el costo unitario a los rubros y activa el programa en el menú).
+2. **Gastos:** facturas, roles, alquileres y caja chica, sin IVA, en cinco categorías (materiales, mano de obra, equipos y transporte, indirectos, otros). Se registran uno a uno o se pegan desde Excel (Fecha · Proveedor · Documento · Descripción · Categoría · Monto); si falta la categoría se deduce del texto. Filtros por categoría, mes y pendientes de pago, y descarga en CSV.
+3. **Subcontratos:** no se registran como gasto; se suman solos desde sus planillas aprobadas o pagadas.
+4. **Presupuesto meta** (solo administradores): lo que se espera gastar por categoría. Se sugiere a partir del costo directo del estudio de propuestas (o venta ÷ 1,298 si no lo hay) y se ajusta a mano.
+5. **Resumen** (solo administradores): venta, planillado, costo real, margen a la fecha, costo y margen proyectados al cierre (costo real ÷ avance planillado), meta vs real por categoría con semáforo, gráfico mensual, flujo de caja, gasto por capítulo y principales proveedores. **Informe PDF** con todo el detalle.
+6. Los residentes ven y registran los gastos de sus obras, pero no los márgenes; solo editan lo que ellos registraron y solo el administrador borra.
+7. Las obras creadas desde una propuesta adjudicada guardan el costo unitario de cada rubro. El tablero gerencial muestra el margen de cada obra y avisa si el costo supera lo planillado o la meta.
