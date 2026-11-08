@@ -92,7 +92,7 @@ function render() {
   const m = $("#main");
   $("#top").hidden = !user; $("#pfoot").hidden = !user;
   if (!user) return renderLogin(m);
-  const nombre = ((perfil && perfil.nombre) || user.email || "").split(" ")[0];
+  const nombre = ((perfil && perfil.nombre) || user.email || "").split(/\s+/).find((w) => w && !/^(ing|arq|dr|dra|lcdo|lcda|sr|sra|eco|abg)\.?$/i.test(w)) || ""; // sin el título profesional
   const visibles = programas;
   const cats = [...CATS, ...[...new Set(programas.map((p) => p.categoria))].filter((c) => !CATS.includes(c)).sort()];
   const grupos = cats.map((c) => ({ c, items: visibles.filter((p) => p.categoria === c).sort((a, b) => (a.orden ?? 100) - (b.orden ?? 100) || a.nombre.localeCompare(b.nombre, "es")) })).filter((g) => g.items.length || (editando && CATS.includes(g.c)));
