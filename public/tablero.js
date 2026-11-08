@@ -31,7 +31,7 @@ async function fetchAll(build) {
 async function q(build) { const { data, error } = await build(); return error ? null : data || []; }
 async function cargar() {
   const desde = sumar(hoy(), -400);
-  const [ob, rep, pls, rub, subs, spl, gar, rdis, actas, mods, avel, avreg, gas, cmeta] = await Promise.all([
+  const [ob, rep, pls, rub, subs, spl, gar, rdis, actas, mods, avel, avreg, gas, cmeta, rls] = await Promise.all([
     q(() => sb.from("obras").select("*").eq("activa", true).order("nombre")),
     fetchAll(() => sb.from("reportes").select("obra_id,numero,fecha,datos").gte("fecha", desde).order("fecha")),
     q(() => sb.from("planillas").select("obra_id,numero,fecha,estado,totales").order("numero")),
@@ -45,10 +45,11 @@ async function cargar() {
     fetchAll(() => sb.from("avance_elementos").select("obra_id,estado,pct")),
     q(() => sb.from("avance_registros").select("obra_id,fecha,estado,pct,resumen,niveles,fotos,total").gte("fecha", sumar(hoy(), -120)).order("fecha")),
     fetchAll(() => sb.from("gastos").select("obra_id,monto")),
-    q(() => sb.from("costos_meta").select("*"))
+    q(() => sb.from("costos_meta").select("*")),
+    q(() => sb.from("roles_pago").select("obra_id,estado,totales"))
   ]);
   obras = ob || [];
-  D = { rep: rep || [], pls: pls || [], rub: rub || [], subs: subs || [], spl: spl || [], gar: gar || [], rdis: rdis || [], actas: actas || [], mods: mods || [], avel: avel || [], avreg: avreg || [], gas: gas || [], cmeta: cmeta || [],
+  D = { rep: rep || [], pls: pls || [], rub: rub || [], subs: subs || [], spl: spl || [], gar: gar || [], rdis: rdis || [], actas: actas || [], mods: mods || [], avel: avel || [], avreg: avreg || [], gas: gas || [], cmeta: cmeta || [], rls: rls || [],
     mod: { pls: !!pls, subs: !!subs, rdi: !!rdis, bim: !!mods, cos: !!gas } };
   R = obras.map(resumen).sort((a, b) => ({ mal: 0, aviso: 1, ok: 2 }[a.sem] - { mal: 0, aviso: 1, ok: 2 }[b.sem]) || a.o.nombre.localeCompare(b.o.nombre, "es"));
 }
@@ -89,7 +90,8 @@ function resumen(o) {
   // costos (gastos + planillas de subcontratos aprobadas o pagadas)
   const cg = por(D.gas).reduce((t, g) => t + num(g.monto), 0), cs = spl.filter((p) => p.estado === "aprobada" || p.estado === "pagada").reduce((t, p) => t + num((p.totales || {}).bruto), 0);
   const cm = por(D.cmeta)[0], mTot = cm ? ["materiales", "mano_obra", "subcontratos", "equipos", "indirectos", "otros"].reduce((t, k) => t + num(cm[k]), 0) : 0;
-  const cos = { real: cg + cs, margen: eco.acumulado - cg - cs, meta: mTot };
+  const cr = por(D.rls).filter((r) => r.estado === "aprobado" || r.estado === "pagado").reduce((t, r) => t + num((r.totales || {}).costo), 0); // roles de pago (Personal)
+  const cos = { real: cg + cs + cr, margen: eco.acumulado - cg - cs - cr, meta: mTot };
   cos.margenPct = eco.acumulado > 0 ? cos.margen / eco.acumulado * 100 : null;
   const av = eco.total > 0 ? eco.acumulado / eco.total : 0;
   cos.eac = av >= 0.05 ? cos.real / av : mTot || null;

@@ -13,6 +13,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/tablero` | Tablero gerencial de todas las obras e informe semanal en PDF |
 | `/ciclo` | Inicio y cierre de obra: listas de arranque y cierre, recepción, balance final y encuesta al cliente |
 | `/costos` | Control de costos por obra: gastos reales, presupuesto meta, margen a la fecha y proyectado, caja |
+| `/personal` | Personal: trabajadores, asistencia diaria, avisos de entrada al IESS y roles de pago |
 | `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
@@ -28,6 +29,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/propuestas.sql` | Propuestas y cotizaciones (solo administradores) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/ciclo.sql` | Inicio y cierre de obra | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/costos.sql` | Control de costos por obra | Se pega una vez en Supabase → SQL Editor, después de `planillas.sql` |
+| `supabase/personal.sql` | Personal y roles de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -131,8 +133,17 @@ Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (s
 
 1. En Supabase → SQL Editor, ejecuta `supabase/costos.sql` (crea gastos y metas, agrega el costo unitario a los rubros y activa el programa en el menú).
 2. **Gastos:** facturas, roles, alquileres y caja chica, sin IVA, en cinco categorías (materiales, mano de obra, equipos y transporte, indirectos, otros). Se registran uno a uno o se pegan desde Excel (Fecha · Proveedor · Documento · Descripción · Categoría · Monto); si falta la categoría se deduce del texto. Filtros por categoría, mes y pendientes de pago, y descarga en CSV.
-3. **Subcontratos:** no se registran como gasto; se suman solos desde sus planillas aprobadas o pagadas.
+3. **Subcontratos y roles de pago:** no se registran como gasto; se suman solos desde las planillas de subcontratos y los roles de Personal aprobados o pagados.
 4. **Presupuesto meta** (solo administradores): lo que se espera gastar por categoría. Se sugiere a partir del costo directo del estudio de propuestas (o venta ÷ 1,298 si no lo hay) y se ajusta a mano.
 5. **Resumen** (solo administradores): venta, planillado, costo real, margen a la fecha, costo y margen proyectados al cierre (costo real ÷ avance planillado), meta vs real por categoría con semáforo, gráfico mensual, flujo de caja, gasto por capítulo y principales proveedores. **Informe PDF** con todo el detalle.
 6. Los residentes ven y registran los gastos de sus obras, pero no los márgenes; solo editan lo que ellos registraron y solo el administrador borra.
 7. Las obras creadas desde una propuesta adjudicada guardan el costo unitario de cada rubro. El tablero gerencial muestra el margen de cada obra y avisa si el costo supera lo planillado o la meta.
+
+## Personal y roles de pago (`/personal`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/personal.sql` (activa también el programa en el menú).
+2. **Trabajadores:** ficha con cédula (valida el dígito verificador), cargo, jornal diario, ingreso, obra, aviso de entrada al IESS y contacto de emergencia. El residente registra al personal de su obra; solo el administrador lo cambia de obra o borra fichas. Al dar de baja recuerda el aviso de salida y el finiquito.
+3. **Asistencia diaria** desde el celular: P (jornada), ½ (medio día) o F (falta) y horas extra por trabajador, botón para marcar a todos presentes y resumen de los últimos 7 días.
+4. **Roles de pago** por quincena, semana o mes: días y horas extra salen de la asistencia; se agregan bonos, anticipos y descuentos. Calcula aporte personal (9,45 %), patronal (12,15 % = 11,15 % + IECE + SECAP), horas extra con 50 % de recargo y provisiones (décimos, vacaciones y fondos de reserva desde el año). Valores 2026: salario básico USD 482. Los parámetros se pueden cambiar en cada rol.
+5. El residente prepara el rol en borrador; el administrador lo aprueba y lo marca como pagado. **PDF** con columna de firma por trabajador.
+6. Integraciones: el costo de los roles aprobados pasa a mano de obra en Control de costos y en el tablero; el reporte diario trae la asistencia del día por cargo y horas; el portal avisa de trabajadores sin aviso de entrada al IESS.

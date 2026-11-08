@@ -55,7 +55,8 @@ function fechaDe(v) {
 }
 
 let sb = null, user = null, perfil = null, obras = [], obraId = "";
-let rubros = [], planillas = [], subs = [], subPls = [], gastos = [], meta = null, sinTablas = false;
+let rubros = [], planillas = [], subs = [], subPls = [], gastos = [], roles = [], meta = null, sinTablas = false;
+const rolesOk = () => roles.filter((r) => r.estado === "aprobado" || r.estado === "pagado");
 let view = "lista", tab = "resumen", gasto = null, metaEd = null, dirty = false, confirm = null, pegar = false;
 let fCat = "", fMes = "", fBus = "", fPend = false;
 const esAdmin = () => perfil && perfil.rol === "admin";
@@ -83,14 +84,16 @@ function calc() {
   for (const g of gastos) real[CATS[g.categoria] ? g.categoria : "otros"] += num(g.monto);
   const splOk = subPls.filter((p) => p.estado === "aprobada" || p.estado === "pagada");
   real.subcontratos = splOk.reduce((t, p) => t + num((p.totales || {}).bruto), 0);
+  real.mano_obra += rolesOk().reduce((t, r) => t + num((r.totales || {}).costo), 0); // roles de pago del módulo Personal
   const costo = Object.values(real).reduce((a, b) => a + b, 0);
   const subsVig = subs.filter((s) => s.estado !== "anulado" && s.estado !== "borrador");
   const comprometido = Math.max(0, subsVig.reduce((t, s) => t + montoSc(s), 0) - real.subcontratos);
   const avance = ventaT > 0 ? Math.min(1, planillado / ventaT) : 0;
   const mt = meta && metaTotal(meta) > 0 ? meta : null, mTot = metaTotal(mt);
   const eac = avance >= 0.05 ? costo / avance : mTot || null; // con menos de 5 % planillado la proyección no es confiable: se usa la meta
-  const pagado = gastos.filter((g) => g.pagado).reduce((t, g) => t + num(g.monto), 0) + subPls.filter((p) => p.estado === "pagada").reduce((t, p) => t + num((p.totales || {}).bruto), 0);
-  const porPagar = gastos.filter((g) => !g.pagado).reduce((t, g) => t + num(g.monto), 0) + subPls.filter((p) => p.estado === "aprobada").reduce((t, p) => t + num((p.totales || {}).bruto), 0);
+  const rolCaja = (r) => { const t = r.totales || {}; return num(t.liquido) + num(t.anticipos) + num(t.desc) + num(t.iess) + num(t.patronal); }; // sueldos + aportes al IESS (las provisiones se pagan después)
+  const pagado = gastos.filter((g) => g.pagado).reduce((t, g) => t + num(g.monto), 0) + subPls.filter((p) => p.estado === "pagada").reduce((t, p) => t + num((p.totales || {}).bruto), 0) + roles.filter((r) => r.estado === "pagado").reduce((t, r) => t + rolCaja(r), 0);
+  const porPagar = gastos.filter((g) => !g.pagado).reduce((t, g) => t + num(g.monto), 0) + subPls.filter((p) => p.estado === "aprobada").reduce((t, p) => t + num((p.totales || {}).bruto), 0) + roles.filter((r) => r.estado === "aprobado").reduce((t, r) => t + rolCaja(r), 0);
   const cats = Object.keys(CATS).map((k) => {
     const m = mt ? num(mt[k]) : 0, ganado = m * avance, v = real[k];
     const sem = !mt || !m ? (v > 0 && mt ? "mal" : "") : v > ganado * 1.05 + 1 ? "mal" : v > ganado + 1 ? "aviso" : "ok";
@@ -109,6 +112,7 @@ function porMes() {
   const add = (f, k, v) => { if (!f) return; const key = String(f).slice(0, 7); (M[key] = M[key] || { costo: 0, venta: 0 })[k] += v; };
   for (const g of gastos) add(g.fecha, "costo", num(g.monto));
   for (const p of subPls) if (p.estado === "aprobada" || p.estado === "pagada") add(p.fecha, "costo", num((p.totales || {}).bruto));
+  for (const r of rolesOk()) add(r.hasta, "costo", num((r.totales || {}).costo));
   for (const p of planillas) if (p.estado !== "borrador") add(p.fecha, "venta", num((p.totales || {}).bruto));
   const keys = Object.keys(M).sort();
   if (!keys.length) return [];
@@ -119,19 +123,20 @@ function porMes() {
 
 /* ---------- datos ---------- */
 async function cargarObra() {
-  rubros = []; planillas = []; subs = []; subPls = []; gastos = []; meta = null; sinTablas = false;
+  rubros = []; planillas = []; subs = []; subPls = []; gastos = []; roles = []; meta = null; sinTablas = false;
   if (obraId) {
     const q = async (fn) => { try { const { data, error } = await fn(); return error ? null : data || []; } catch (_) { return null; } };
-    const [g, r, p, s, sp, mt] = await Promise.all([
+    const [g, r, p, s, sp, mt, rl] = await Promise.all([
       q(() => sb.from("gastos").select("*").eq("obra_id", obraId).order("fecha", { ascending: false })),
       q(() => sb.from("rubros").select("id,codigo,descripcion,unidad,cantidad,precio,costo,capitulo,adicional").eq("obra_id", obraId).order("orden")),
       q(() => sb.from("planillas").select("id,numero,fecha,estado,totales").eq("obra_id", obraId).order("numero")),
       q(() => sb.from("subcontratos").select("id,numero,contratista,estado,monto,items").eq("obra_id", obraId).order("numero")),
       q(() => sb.from("subcontrato_planillas").select("id,subcontrato_id,numero,fecha,estado,totales").eq("obra_id", obraId).order("numero")),
-      esAdmin() ? q(() => sb.from("costos_meta").select("*").eq("obra_id", obraId)) : Promise.resolve([])
+      esAdmin() ? q(() => sb.from("costos_meta").select("*").eq("obra_id", obraId)) : Promise.resolve([]),
+      q(() => sb.from("roles_pago").select("id,numero,desde,hasta,estado,totales").eq("obra_id", obraId).order("numero"))
     ]);
     if (g === null) sinTablas = true;
-    gastos = g || []; rubros = r || []; planillas = p || []; subs = s || []; subPls = sp || []; meta = (mt || [])[0] || null;
+    gastos = g || []; rubros = r || []; planillas = p || []; subs = s || []; subPls = sp || []; meta = (mt || [])[0] || null; roles = rl || [];
   }
   render();
 }
@@ -167,6 +172,7 @@ function htmlResumen() {
   const provs = {};
   for (const g of gastos) { const p = (g.proveedor || "").trim(); if (p) provs[p] = (provs[p] || 0) + num(g.monto); }
   for (const p of subPls) if (p.estado === "aprobada" || p.estado === "pagada") { const s = subs.find((x) => x.id === p.subcontrato_id); if (s) provs[s.contratista] = (provs[s.contratista] || 0) + num((p.totales || {}).bruto); }
+  if (rolesOk().length) provs["Roles de pago (personal DLV)"] = rolesOk().reduce((t, r) => t + num((r.totales || {}).costo), 0);
   const top = Object.entries(provs).sort((a, b) => b[1] - a[1]).slice(0, 6);
   return `
   <section class="obracard"><div class="listhead"><h1>${esc(o.nombre)}</h1><button class="btn sm" type="button" data-act="pdf">Informe PDF</button></div>
@@ -174,7 +180,7 @@ function htmlResumen() {
     <div class="kpis">
       ${kpi("Venta (contrato + adicionales)", money(k.venta))}
       ${kpi("Planillado al cliente", money(k.planillado), "", pct(k.avance * 100, 0) + " del contrato")}
-      ${kpi("Costo real a la fecha", money(k.costo), "", gastos.length + " gastos · " + subPls.filter((p) => p.estado === "aprobada" || p.estado === "pagada").length + " planillas de subcontratos")}
+      ${kpi("Costo real a la fecha", money(k.costo), "", [gastos.length + " gastos", subPls.filter((p) => p.estado === "aprobada" || p.estado === "pagada").length + " planillas de subcontratos", rolesOk().length ? rolesOk().length + " roles de pago" : ""].filter(Boolean).join(" · "))}
       ${kpi("Margen a la fecha", money(k.margen), clsMargen(k.margenPct), pct(k.margenPct) + " de lo planillado")}
     </div>
   </section>
@@ -257,7 +263,7 @@ function htmlGastos() {
         <span><span class="pill cat-${esc(g.categoria)}">${CATS[g.categoria] || g.categoria}</span>${g.pagado ? "" : ` <span class="pill gp-aviso">Por pagar</span>`}</span></span>
       <b class="mt">${money(num(g.monto))}</b></button>`).join("") + (lista.length > MAX ? `<span class="code">Mostrando ${MAX} de ${lista.length}. Usa los filtros para ver el resto.</span>` : "")
     : gastos.length ? `<div class="empty"><span>Ningún gasto coincide con el filtro.</span></div>`
-    : `<div class="empty"><span>Registra aquí las facturas, roles de pago, alquileres y caja chica de la obra. Los subcontratos se suman solos desde sus planillas aprobadas.</span><button class="btn hivis" type="button" data-act="nuevo">+ Primer gasto</button></div>`}</div>`;
+    : `<div class="empty"><span>Registra aquí las facturas, roles de pago, alquileres y caja chica de la obra. Los subcontratos se suman solos desde sus planillas aprobadas y los roles de pago desde Personal.</span><button class="btn hivis" type="button" data-act="nuevo">+ Primer gasto</button></div>`}</div>`;
 }
 function htmlMeta() {
   const m = metaEd || (metaEd = meta ? { ...meta } : { ...sugerida().meta, _nueva: true });
@@ -423,13 +429,15 @@ function pdf() {
   [["Cobrado al cliente (planillas pagadas, valor bruto)", k.cobrado], ["Pagado en gastos y subcontratos", -k.pagado], ["SALDO DE CAJA", k.caja, true], ["Planillado por cobrar", k.planillado - k.cobrado], ["Por pagar (gastos pendientes y planillas de subcontratos aprobadas)", k.porPagar], ["Comprometido en subcontratos (saldo por planillar)", k.comprometido]]
     .forEach(([t, v, b]) => fila(cf, [t, money(v)], b ? { bold: true, fill: SUB } : {}));
   // detalle de gastos
-  if (gastos.length) {
+  if (gastos.length || k.costo > 0) {
     doc.addPage(); pagina++; y = header("Detalle de gastos");
-    const cg = [["FECHA", 17, "l"], ["PROVEEDOR", 42, "l"], ["DOCUMENTO", 24, "l"], ["DESCRIPCIÓN", 55, "l"], ["CATEGORÍA", 24, "l"], ["MONTO", 24, "r"]];
-    cab(cg);
-    const orden = gastos.slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
-    for (const g of orden) fila(cg, [fmtF(g.fecha), g.proveedor || "", g.documento || "", g.descripcion || "", CATS[g.categoria] || g.categoria, money(num(g.monto))], { size: 6.4, head: () => cab(cg) });
-    fila(cg, ["", "TOTAL GASTOS", "", gastos.length + " registros", "", money(gastos.reduce((t, g) => t + num(g.monto), 0))], { bold: true, fill: SUB });
+    if (gastos.length) {
+      const cg = [["FECHA", 17, "l"], ["PROVEEDOR", 42, "l"], ["DOCUMENTO", 24, "l"], ["DESCRIPCIÓN", 55, "l"], ["CATEGORÍA", 24, "l"], ["MONTO", 24, "r"]];
+      cab(cg);
+      const orden = gastos.slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+      for (const g of orden) fila(cg, [fmtF(g.fecha), g.proveedor || "", g.documento || "", g.descripcion || "", CATS[g.categoria] || g.categoria, money(num(g.monto))], { size: 6.4, head: () => cab(cg) });
+      fila(cg, ["", "TOTAL GASTOS", "", gastos.length + " registros", "", money(gastos.reduce((t, g) => t + num(g.monto), 0))], { bold: true, fill: SUB });
+    }
     const spl = subPls.filter((p) => p.estado === "aprobada" || p.estado === "pagada");
     if (spl.length) {
       y += 5; titulo("PLANILLAS DE SUBCONTRATOS INCLUIDAS");
@@ -437,6 +445,13 @@ function pdf() {
       cab(cs);
       for (const p of spl) { const s = subs.find((x) => x.id === p.subcontrato_id) || {}; fila(cs, [fmtF(p.fecha), s.contratista || "", "PS-" + String(s.numero || 0).padStart(2, "0") + "-" + String(p.numero).padStart(2, "0"), p.estado === "pagada" ? "Pagada" : "Aprobada", money(num((p.totales || {}).bruto))], { size: 6.4, head: () => cab(cs) }); }
       fila(cs, ["", "TOTAL SUBCONTRATOS", "", "", money(k.real.subcontratos)], { bold: true, fill: SUB });
+    }
+    if (rolesOk().length) {
+      y += 5; titulo("ROLES DE PAGO INCLUIDOS (MANO DE OBRA)");
+      const cr = [["ROL", 17, "l"], ["PERÍODO", 50, "l"], ["ESTADO", 25, "l"], ["LÍQUIDO", 30, "r"], ["APORTES Y PROVISIONES", 34, "r"], ["COSTO", 30, "r"]];
+      cab(cr);
+      for (const r of rolesOk()) { const t = r.totales || {}; fila(cr, ["ROL-" + String(r.numero).padStart(2, "0"), fmtF(r.desde) + " – " + fmtF(r.hasta), r.estado === "pagado" ? "Pagado" : "Aprobado", money(num(t.liquido)), money(num(t.iess) + num(t.patronal) + num(t.prov)), money(num(t.costo))], { size: 6.4, head: () => cab(cr) }); }
+      fila(cr, ["", "TOTAL ROLES", "", "", "", money(rolesOk().reduce((a, r) => a + num((r.totales || {}).costo), 0))], { bold: true, fill: SUB });
     }
   }
   const name = "Costos " + (o.nombre || "obra").replace(/[\\/:*?"<>|]/g, "") + " " + hoy() + ".pdf";

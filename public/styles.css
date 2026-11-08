@@ -172,3 +172,4 @@ html{background:var(--bg)}
 img.nofoto{outline:1px dashed var(--bad);color:var(--bad);font-size:.7rem}
 a.btn{text-decoration:none;color:inherit}
 a.btn.primary{color:var(--on-navy)}
+.asisdia{display:flex;gap:8px 12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:var(--bg)}

@@ -178,6 +178,44 @@ async function cargarBimDia() {
   // reporte nuevo: trae solo el avance del día (actividades, fotos y observados)
   if (draft._autoBim && rows.some((r) => !ya.has(r.id))) traerBim();
 }
+// Asistencia del día tomada en Personal → mano de obra del reporte (por cargo, con horas)
+const asisCache = {};
+async function cargarAsisDia() {
+  if (!draft || !draft.obraId || !draft.fecha) return;
+  const k = draft.obraId + "|" + draft.fecha;
+  if (!(k in asisCache)) {
+    const { data, error } = await sb.from("asistencia").select("marcas").eq("obra_id", draft.obraId).eq("fecha", draft.fecha).maybeSingle();
+    asisCache[k] = error ? null : data ? data.marcas || {} : {};
+  }
+  const mk = asisCache[k], box = $("#asisDia");
+  if (!box || !draft || draft.obraId + "|" + draft.fecha !== k) return;
+  if (mk === null) { box.hidden = true; delete draft._autoAsis; return; } // módulo de personal no activado
+  const pres = Object.values(mk).filter((x) => x.e === "P" || x.e === "M");
+  box.hidden = false;
+  box.innerHTML = pres.length ? `<span class="code">Asistencia tomada en Personal: ${pres.length} ${pres.length === 1 ? "persona" : "personas"} en obra.</span><button class="btn sm" type="button" data-act="asisTraer">Traer de la asistencia</button>`
+    : `<span class="code">Aún no hay asistencia tomada en Personal para este día.</span><a class="btn sm" href="/personal?obra=${encodeURIComponent(draft.obraId)}">Tomar asistencia</a>`;
+  if (draft._autoAsis && pres.length && !totPer(draft.directa).n) traerAsis(); else delete draft._autoAsis;
+}
+function traerAsis() {
+  delete draft._autoAsis;
+  const mk = asisCache[draft.obraId + "|" + draft.fecha] || {}, g = { directa: {}, indirecta: {} };
+  for (const x of Object.values(mk)) {
+    if (x.e !== "P" && x.e !== "M") continue;
+    const cat = x.cargo || "Sin cargo", k = PER_IND.includes(cat) ? "indirecta" : "directa", a = g[k][cat] = g[k][cat] || { n: 0, h: 0 };
+    a.n++; a.h += (x.e === "P" ? 8 : 4) + num(x.hx);
+  }
+  let n = 0;
+  for (const k of ["directa", "indirecta"]) {
+    const usadas = new Set();
+    for (const p of draft[k]) {
+      const a = g[k][p.cat];
+      if (a) { p.n = String(a.n); p.h = String(a.h); usadas.add(p.cat); n += a.n; }
+      else if (k === "directa") { p.n = ""; p.h = ""; } // la directa es personal DLV: manda la asistencia; la indirecta conserva subcontratistas
+    }
+    for (const [cat, a] of Object.entries(g[k])) if (!usadas.has(cat)) { draft[k].push({ cat, n: String(a.n), h: String(a.h) }); n += a.n; }
+  }
+  setDirty(true); render(); toast(n + (n === 1 ? " persona pasada" : " personas pasadas") + " de la asistencia al reporte");
+}
 function traerBim() {
   delete draft._autoBim;
   const rows = bimCache[draft.obraId + "|" + draft.fecha] || [];
@@ -216,7 +254,7 @@ function render() {
   $("#dock").hidden = view !== "editor";
   if (!user) return renderLogin(m);
   if (view === "obra") return renderObraForm(m);
-  if (view === "editor") { renderEditor(m); pintarFotos(); cargarBimDia(); return; }
+  if (view === "editor") { renderEditor(m); pintarFotos(); cargarBimDia(); cargarAsisDia(); return; }
   renderLista(m);
 }
 function renderLogin(m) {
@@ -317,7 +355,7 @@ function renderEditor(m) {
       <button class="btn sm add" type="button" data-add="equipos" data-tipo="${tipo}">+ Equipo ${tipo}</button>`).join("")}
     </div></details>
   <details class="sec"><summary><span class="num">4</span><h2>Mano de obra</h2><span class="sum">${td.n + ti.n} personas</span></summary>
-    <div class="body">${[["directa", "Directa (DLV)", td], ["indirecta", "Indirecta / subcontratos", ti]].map(([k, t, tot]) => `
+    <div class="body"><div class="asisdia" id="asisDia" hidden></div>${[["directa", "Directa (DLV)", td], ["indirecta", "Indirecta / subcontratos", ti]].map(([k, t, tot]) => `
       <div class="sub">${t}</div>
       <div class="rows">${d[k].map((p, i) => `
         <div class="r r-per">${inp(`${k}.${i}.cat`, "Categoría")}${inp(`${k}.${i}.n`, "N.° pers.", "number")}${inp(`${k}.${i}.h`, "Horas", "number")}
@@ -424,9 +462,10 @@ document.addEventListener("click", async (e) => {
   if (a === "borrarObra") { confirmDel = "obra"; render(); return; }
   if (a === "borrarObraOk") return archivarObra();
   if (a === "cancelDel") { confirmDel = null; render(); return; }
-  if (a === "nuevoRep") { const o = obraActual(); if (!o) return; draft = nuevoReporte(o); draft._autoBim = true; confirmDel = null; view = "editor"; setDirty(true); render(); window.scrollTo(0, 0); return; }
+  if (a === "nuevoRep") { const o = obraActual(); if (!o) return; draft = nuevoReporte(o); draft._autoBim = true; draft._autoAsis = true; confirmDel = null; view = "editor"; setDirty(true); render(); window.scrollTo(0, 0); return; }
   if (a === "borrarRep") { confirmDel = "rep"; render(); return; }
   if (a === "bimTraer") return traerBim();
+  if (a === "asisTraer") return traerAsis();
   if (a === "borrarRepOk") return borrarRep();
   if (b.id === "btnVolver") {
     if (dirty && !b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "¿Salir sin guardar?"; setTimeout(() => { b.dataset.sure = ""; b.textContent = "← Reportes"; }, 3000); return; }
@@ -459,7 +498,7 @@ async function archivarObra() {
   obraId = ""; confirmDel = null; view = "lista"; toast("Obra archivada"); await cargarObras();
 }
 async function guardarRep() {
-  const d = clone(draft); delete d._autoBim; d.numero = parseInt(d.numero, 10) || 1;
+  const d = clone(draft); delete d._autoBim; delete d._autoAsis; d.numero = parseInt(d.numero, 10) || 1;
   d.actividades = d.actividades.map((a) => ({ ...a, acum: r2(acumPrevio(a, draft) + num(a.cant)) }));
   const { id, obraId: oid, numero, fecha, turno, creadoPor, ...datos } = d;
   const row = { obra_id: oid, numero, fecha, turno, datos, actualizado: new Date().toISOString() };

@@ -37,7 +37,7 @@ const BASE = [
 ];
 
 let sb = null, user = null, perfil = null;
-let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [], rdiVencidos = [], acuVencidos = [];
+let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [], rdiVencidos = [], acuVencidos = [], sinIess = [];
 const esAdmin = () => perfil && perfil.rol === "admin";
 
 /* ---------- datos ---------- */
@@ -65,6 +65,9 @@ async function cargarHoy() {
     sb.from("actas").select("obra_id,acuerdos")
   ]);
   rdiVencidos = rd.error ? [] : (rd.data || []);
+  // personal activo sin aviso de entrada al IESS (si el módulo está activado)
+  const ti = await sb.from("trabajadores").select("id,obra_id,nombres").eq("activo", true).eq("iess", false);
+  sinIess = ti.error ? [] : (ti.data || []);
   acuVencidos = ac.error ? [] : (ac.data || []).flatMap((x) => (x.acuerdos || []).filter((u) => u.estado !== "cumplido" && u.plazo && u.plazo <= ayer).map((u) => ({ ...u, obra_id: x.obra_id })));
 }
 
@@ -86,6 +89,7 @@ function render() {
       <div class="hoy-row">${obrasHoy.map((o) => `<a class="obra-chip ${o.reporte ? "ok" : "pend"}" href="/reportes"><span class="d"></span>${esc(o.nombre)}<small>${o.reporte ? "Reporte listo" : "Sin reporte"}</small></a>`).join("")}</div>
       ${pend.length ? `<span class="hint">${pend.length === 1 ? "1 obra" : pend.length + " obras"} sin reporte de hoy.</span>` : `<span class="hint">Todas las obras tienen su reporte de hoy.</span>`}</div>` : ""}
     ${rdiVencidos.length || acuVencidos.length ? `<a class="gar-alert" href="/rdi?obra=${encodeURIComponent((rdiVencidos[0] || acuVencidos[0]).obra_id)}&tab=${rdiVencidos.length ? "rdi" : "acuerdos"}"><b>Pendientes fuera de plazo</b><span>${[rdiVencidos.length ? rdiVencidos.length + (rdiVencidos.length === 1 ? " RDI sin respuesta" : " RDI sin respuesta") : "", acuVencidos.length ? acuVencidos.length + (acuVencidos.length === 1 ? " acuerdo de acta vencido" : " acuerdos de actas vencidos") : ""].filter(Boolean).join(" · ")}</span></a>` : ""}
+    ${sinIess.length ? `<a class="gar-alert" href="/personal?tab=trabajadores&obra=${encodeURIComponent(sinIess[0].obra_id || "")}"><b>${sinIess.length === 1 ? "1 trabajador sin" : sinIess.length + " trabajadores sin"} aviso de entrada al IESS</b><span>${sinIess.slice(0, 3).map((t) => { const ob = (obrasHoy || []).find((o) => o.id === t.obra_id); return esc(t.nombres + (ob ? " · " + ob.nombre : "")); }).join(" · ")}</span></a>` : ""}
     ${garPorVencer.length ? `<a class="gar-alert" href="/subcontratos?tab=garantias&obra=${encodeURIComponent(garPorVencer[0].obra_id)}"><b>${garPorVencer.length === 1 ? "1 garantía vence" : garPorVencer.length + " garantías vencen"} en los próximos 30 días o ya vencieron</b><span>${garPorVencer.slice(0, 3).map((g) => { const ob = (obrasHoy || []).find((o) => o.id === g.obra_id); return esc((ob ? ob.nombre + " · " : "") + g.vencimiento.split("-").reverse().join("/")); }).join(" · ")}</span></a>` : ""}
   </section>
   <div class="tools-row">
