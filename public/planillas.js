@@ -12,7 +12,7 @@ function num(v) {
   const c = s.lastIndexOf(","), d = s.lastIndexOf(".");
   if (c > -1 && d > -1) s = c > d ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
   else if (c > -1) s = s.match(/,/g).length > 1 ? s.replace(/,/g, "") : s.replace(",", ".");
-  else if (d > -1 && (s.match(/\./g).length > 1)) s = s.replace(/\./g, "");
+  else if (d > -1 && (s.match(/\./g).length > 1 || /^-?\d{1,3}(\.\d{3})+$/.test(s))) s = s.replace(/\./g, ""); // 3.096 = tres mil noventa y seis (formato es-EC)
   const n = parseFloat(s); return isFinite(n) ? n : 0;
 }
 const r2 = (n) => Math.round(n * 100) / 100;
@@ -373,8 +373,8 @@ function generarPDF() {
     ["Planillado anterior", t.anterior], ["VALOR DE ESTA PLANILLA", t.bruto, true], ["Planillado acumulado", t.acumulado], ["Saldo por planillar", t.saldo]
   ];
   const liq = [
-    ["Valor de esta planilla", t.bruto], ["(−) Amortización del anticipo (" + num(d.config.anticipo_pct) + " %)", -t.amort], ["(−) Fondo de garantía (" + num(d.config.ret_pct) + " %)", -t.ret],
-    ["(−) Multas", -t.multas], ["(−) Otros descuentos", -t.descuentos], ["Subtotal", t.bruto - t.amort - t.ret - t.multas - t.descuentos], ["(+) IVA " + num(d.config.iva_pct) + " %", t.iva], ["LÍQUIDO A PAGAR", t.liquido, true]
+    ["Valor de esta planilla", t.bruto], ["(−) Amortización del anticipo (" + num(d.config.anticipo_pct).toLocaleString("es-EC") + " %)", -t.amort], ["(−) Fondo de garantía (" + num(d.config.ret_pct).toLocaleString("es-EC") + " %)", -t.ret],
+    ["(−) Multas", -t.multas], ["(−) Otros descuentos", -t.descuentos], ["Subtotal", t.bruto - t.amort - t.ret - t.multas - t.descuentos], ["(+) IVA " + num(d.config.iva_pct).toLocaleString("es-EC") + " %", t.iva], ["LÍQUIDO A PAGAR", t.liquido, true]
   ];
   const box = (x, w, title, rows) => {
     doc.setFillColor(...NAVY); doc.rect(x, y, w, 5.5, "F"); doc.setFont("helvetica", "bold"); doc.setFontSize(7.2); doc.setTextColor(255, 255, 255); doc.text(title, x + 2, y + 3.8);

@@ -170,3 +170,5 @@ html{background:var(--bg)}
 .bimth{display:flex;gap:6px;flex-wrap:wrap}
 .bimth img{width:64px;height:64px;object-fit:cover;border-radius:6px;background:var(--field)}
 img.nofoto{outline:1px dashed var(--bad);color:var(--bad);font-size:.7rem}
+a.btn{text-decoration:none;color:inherit}
+a.btn.primary{color:var(--on-navy)}

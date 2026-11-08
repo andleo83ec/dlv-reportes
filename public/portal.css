@@ -58,3 +58,5 @@ a.card:hover,button.card:hover{border-color:var(--navy);transform:translateY(-1p
 .icon-opt svg{width:22px;height:22px}
 .icon-opt[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
 .fld .chk{margin-top:2px}
+.gar-alert{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--ink);border:1px solid var(--warn);background:var(--warn-bg);border-radius:10px;padding:10px 14px;font-size:.9rem}
+.gar-alert span{font-size:.8rem;color:var(--muted)}

@@ -1,5 +1,6 @@
 /* Estado de pago: resumen económico arriba, rubros en filas con la cantidad del período editable */
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px 14px}
+@media (max-width:480px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis b{font-size:.9rem}}
 .kpis div{display:flex;flex-direction:column;min-width:0}
 .kpis small{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .kpis b{font-family:var(--mono);font-size:1rem;font-variant-numeric:tabular-nums}

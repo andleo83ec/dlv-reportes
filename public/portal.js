@@ -37,7 +37,7 @@ const BASE = [
 ];
 
 let sb = null, user = null, perfil = null;
-let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "";
+let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [];
 const esAdmin = () => perfil && perfil.rol === "admin";
 
 /* ---------- datos ---------- */
@@ -52,6 +52,11 @@ async function cargarHoy() {
   const { data: reps } = await sb.from("reportes").select("obra_id").eq("fecha", hoy());
   const con = new Set((reps || []).map((r) => r.obra_id));
   obrasHoy = (obras || []).map((o) => ({ ...o, reporte: con.has(o.id) }));
+  // garantías vigentes que vencen en 30 días o ya vencieron (si el módulo está activado)
+  const lim = new Date(); lim.setDate(lim.getDate() + 30);
+  const limite = lim.getFullYear() + "-" + String(lim.getMonth() + 1).padStart(2, "0") + "-" + String(lim.getDate()).padStart(2, "0");
+  const g = await sb.from("garantias").select("id,obra_id,tipo,monto,vencimiento").eq("estado", "vigente").lte("vencimiento", limite).order("vencimiento");
+  garPorVencer = g.error ? [] : (g.data || []);
 }
 
 /* ---------- render ---------- */
@@ -71,6 +76,7 @@ function render() {
     ${obrasHoy && obrasHoy.length ? `<div class="hoy"><span class="code">HOY · ${new Date().toLocaleDateString("es-EC", { weekday: "long", day: "numeric", month: "long" })}</span>
       <div class="hoy-row">${obrasHoy.map((o) => `<a class="obra-chip ${o.reporte ? "ok" : "pend"}" href="/reportes"><span class="d"></span>${esc(o.nombre)}<small>${o.reporte ? "Reporte listo" : "Sin reporte"}</small></a>`).join("")}</div>
       ${pend.length ? `<span class="hint">${pend.length === 1 ? "1 obra" : pend.length + " obras"} sin reporte de hoy.</span>` : `<span class="hint">Todas las obras tienen su reporte de hoy.</span>`}</div>` : ""}
+    ${garPorVencer.length ? `<a class="gar-alert" href="/subcontratos?tab=garantias&obra=${encodeURIComponent(garPorVencer[0].obra_id)}"><b>${garPorVencer.length === 1 ? "1 garantía vence" : garPorVencer.length + " garantías vencen"} en los próximos 30 días o ya vencieron</b><span>${garPorVencer.slice(0, 3).map((g) => { const ob = (obrasHoy || []).find((o) => o.id === g.obra_id); return esc((ob ? ob.nombre + " · " : "") + g.vencimiento.split("-").reverse().join("/")); }).join(" · ")}</span></a>` : ""}
   </section>
   <div class="tools-row">
     <label class="fld search" for="buscar"><span class="vh">Buscar programa</span><input id="buscar" type="text" placeholder="Buscar programa…" value="${esc(filtro)}" autocomplete="off"></label>

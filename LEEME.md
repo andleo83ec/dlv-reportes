@@ -8,6 +8,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/reportes` | Reporte diario de obra |
 | `/visor` | Visor 3D y avance (modelo IFC) |
 | `/planillas` | Estado de pago: presupuesto por obra y planillas al mandante con PDF |
+| `/subcontratos` | Subcontratos y garantías: contratos, planillas de subcontratistas, pólizas y evaluación |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
@@ -16,6 +17,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/schema.sql` | Tablas, usuarios y permisos | Se pega una vez en Supabase → SQL Editor |
 | `supabase/portal.sql` | Menú de programas del portal | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/planillas.sql` | Presupuesto (rubros) y planillas del estado de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/subcontratos.sql` | Subcontratos, sus planillas y garantías | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -62,3 +64,13 @@ Los cambios del menú se ven al instante para todos, sin publicar código. Los p
 4. **Planilla:** cantidad del período por rubro; calcula anterior, acumulado, % de avance, amortización del anticipo, fondo de garantía, multas, IVA y líquido a pagar. Avisa si un rubro supera la cantidad contratada.
 5. **Estados:** Borrador → Presentada → Aprobada → Pagada. Fuera de borrador las cantidades quedan bloqueadas. Solo el admin aprueba, marca pagada o borra.
 6. **PDF** A4 horizontal: carátula con resumen y firmas (DLV, fiscalización, mandante) y detalle por rubro.
+
+## Subcontratos y garantías (`/subcontratos`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/subcontratos.sql` (activa también el programa en el menú).
+2. **Contrato:** datos del subcontratista, alcance, rubros (a mano, pegados desde Excel o traídos del presupuesto de la obra con el precio del subcontratista), condiciones de pago y la revisión antes de firmar (10 puntos).
+3. **Planillas del subcontratista:** como el estado de pago, pero además descuenta el fondo de garantía y las retenciones de renta e IVA (DLV como agente de retención). PDF con carátula, balance del contrato, liquidación y firmas.
+4. **Garantías y pólizas:** las que entregan los subcontratistas y las que DLV entrega al mandante. Semáforo de vencimiento; las que vencen en 30 días o ya vencieron aparecen como alerta en el portal.
+5. **Evaluación al cierre:** calidad, plazos, seguridad, orden y documentación (1 a 5) y si se le volvería a contratar.
+
+Los montos se escriben como en Ecuador: `3.096` es tres mil noventa y seis y `1,75` es uno coma setenta y cinco.

@@ -1,0 +1,34 @@
+/* Subcontratos: cuadro de contratos con avance, pestañas Contratos/Garantías y semáforo de vencimientos */
+.segtabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.segtabs button{border:0;background:transparent;padding:10px;font-weight:600;font-size:.92rem;color:var(--muted)}
+.segtabs button[aria-selected="true"]{background:var(--navy);color:var(--on-navy)}
+.alertbar{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);border-radius:8px;padding:9px 12px;font-size:.86rem}
+.alertbar span{color:var(--muted);font-size:.8rem}
+.rep.sc{align-items:start}
+.rep.sc .d{font-family:var(--body);font-size:.82rem}
+@media (max-width:480px){.rep.sc{grid-template-columns:auto minmax(0,1fr)}.rep.sc .pill{grid-column:2;justify-self:start;order:-1}}
+.meter.sm{height:5px;margin-top:3px}
+.pill.sc-borrador{background:var(--field)}
+.pill.sc-vigente{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pill.sc-terminado{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.pill.sc-anulado{text-decoration:line-through}
+.rep.gar{grid-template-columns:auto minmax(0,1fr) auto}
+.gdot{width:12px;height:12px;border-radius:99px;background:var(--ok);justify-self:center}
+.gdot.aviso{background:var(--hivis)}
+.gdot.mal{background:var(--bad)}
+.gdot.gris{background:var(--line)}
+.pill.gp-aviso{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.gp-mal{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.pill.gp-ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.rep.gar .pill{white-space:nowrap}
+@media (max-width:480px){.rep.gar{grid-template-columns:auto minmax(0,1fr)}.rep.gar .pill{grid-column:2;justify-self:start}}
+.r-it{grid-template-columns:minmax(0,.8fr) minmax(0,3fr) auto}
+.r-it .ext{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr);gap:6px}
+@media (max-width:480px){.r-it .ext{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pastebox{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:8px;padding:10px;background:var(--bg)}
+.pick{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow:auto}
+.pick .chk{align-items:flex-start;font-size:.85rem}
+.rate{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
+.stars{display:flex;gap:4px}
+.stars button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-weight:500}
+.stars button[aria-pressed="true"]{background:var(--hivis);border-color:var(--hivis);color:var(--hivis-ink)}
