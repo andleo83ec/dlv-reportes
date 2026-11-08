@@ -15,6 +15,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/costos` | Control de costos por obra: gastos reales, presupuesto meta, margen a la fecha y proyectado, caja |
 | `/personal` | Personal: trabajadores, asistencia diaria, avisos de entrada al IESS y roles de pago |
 | `/documentos` | Control de documentos: listado maestro, versiones con archivo, revisiones y acuse de lectura |
+| `/compras` | Compras: pedido de obra o cotización, comparativo, orden de pedido, recepción y factura |
 | `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
@@ -32,6 +33,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/costos.sql` | Control de costos por obra | Se pega una vez en Supabase → SQL Editor, después de `planillas.sql` |
 | `supabase/personal.sql` | Personal y roles de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/documentos.sql` | Control de documentos | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/compras.sql` | Compras | Se pega una vez en Supabase → SQL Editor, después de `costos.sql`. Reemplaza los permisos de `002_compras.sql` del módulo dlv-compras |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -157,3 +159,13 @@ Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (s
 3. Con el listado vacío, el administrador puede **cargar un listado sugerido** con los procesos que ya cubre la plataforma; quedan "en elaboración" para asignar responsable y publicar.
 4. **Publicar versión:** número, fecha, qué cambió, elaboró, revisó, aprobó y el archivo. La nueva pasa a vigente y la anterior queda obsoleta en el historial. Cada documento tiene su revisión periódica (12 meses por defecto) con aviso de vencimiento.
 5. **Acuse de lectura:** cada persona confirma que leyó la versión vigente; el portal avisa de los documentos nuevos o actualizados en los últimos 30 días que el usuario aún no leyó.
+
+## Compras (`/compras`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/compras.sql` (después de `costos.sql`). Usa las mismas tablas y numeración del módulo **dlv-compras** (SC, PD, OC, GE). **No ejecutes `002_compras.sql` de ese módulo**: abría la tabla de obras y todas las compras a cualquier usuario. Si ya lo ejecutaste, `compras.sql` quita esas políticas y deja los permisos por obra; también cierra a solo administradores las tablas del lector de facturas (`facturas_proveedor`…), que sigue funcionando con su clave de servicio.
+2. **Pedido de obra (PD):** el residente pide el material de su obra (ítems a mano o pegados desde Excel). El administrador lo aprueba eligiendo proveedor y precios —con el último precio pagado como referencia— y la orden sale emitida; o lo pasa a cotización, o lo rechaza con motivo.
+3. **Cotización (SC):** proveedores invitados (con el texto listo para pedir la proforma por WhatsApp), proformas con precio por ítem, marca, "cumple", plazo y forma de pago; **comparativo** con el menor precio resaltado, adjudicación por ítem o "todo a uno" con justificación obligatoria, y una orden en borrador por proveedor. PDF del comparativo.
+4. **Orden de pedido (OC):** se revisa y se emite; PDF con firmas y botón para enviarla por WhatsApp al proveedor. Se puede anular mientras no tenga recepciones.
+5. **Recepción (GE):** el residente registra lo recibido y rechazado con la guía de remisión, transportista y placa; acepta entregas parciales y no deja recibir más de lo pendiente. PDF del acta de recepción.
+6. **Factura:** el administrador la registra (o la elige entre las que llegaron por correo, si está el lector de facturas) y ve el cruce **pedido / recibido / facturado** sin IVA: cuadra si la diferencia es menor al 1 % (mínimo $1). Al guardarla, el subtotal entra como **gasto** de la obra en Control de costos, y las órdenes emitidas aún sin factura aparecen como **comprometido**.
+7. El portal avisa de pedidos por aprobar, órdenes por recibir y entregas atrasadas. Los pedidos por WhatsApp del módulo dlv-compras quedan para una segunda fase.

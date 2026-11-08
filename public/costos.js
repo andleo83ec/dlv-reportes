@@ -55,7 +55,7 @@ function fechaDe(v) {
 }
 
 let sb = null, user = null, perfil = null, obras = [], obraId = "";
-let rubros = [], planillas = [], subs = [], subPls = [], gastos = [], roles = [], meta = null, sinTablas = false;
+let rubros = [], planillas = [], subs = [], subPls = [], gastos = [], roles = [], ocsC = [], factsC = [], meta = null, sinTablas = false;
 const rolesOk = () => roles.filter((r) => r.estado === "aprobado" || r.estado === "pagado");
 let view = "lista", tab = "resumen", gasto = null, metaEd = null, dirty = false, confirm = null, pegar = false;
 let fCat = "", fMes = "", fBus = "", fPend = false;
@@ -88,6 +88,8 @@ function calc() {
   const costo = Object.values(real).reduce((a, b) => a + b, 0);
   const subsVig = subs.filter((s) => s.estado !== "anulado" && s.estado !== "borrador");
   const comprometido = Math.max(0, subsVig.reduce((t, s) => t + montoSc(s), 0) - real.subcontratos);
+  // órdenes de compra emitidas que aún no se facturan (la factura ya entra como gasto)
+  const compras = ocsC.filter((o) => !["borrador", "anulada"].includes(o.estado)).reduce((t, o) => t + Math.max(0, num(o.subtotal) - factsC.filter((f) => f.orden_id === o.id).reduce((a, f) => a + num(f.subtotal), 0)), 0);
   const avance = ventaT > 0 ? Math.min(1, planillado / ventaT) : 0;
   const mt = meta && metaTotal(meta) > 0 ? meta : null, mTot = metaTotal(mt);
   const eac = avance >= 0.05 ? costo / avance : mTot || null; // con menos de 5 % planillado la proyección no es confiable: se usa la meta
@@ -100,7 +102,7 @@ function calc() {
     return { k, nombre: CATS[k], meta: m, ganado, real: v, consumo: m ? v / m * 100 : null, sem };
   });
   return {
-    venta: ventaT, planillado, cobrado, costo, real, cats, comprometido, avance, meta: mt, metaTotal: mTot, eac,
+    venta: ventaT, planillado, cobrado, costo, real, cats, comprometido, compras, avance, meta: mt, metaTotal: mTot, eac,
     margen: planillado - costo, margenPct: planillado > 0 ? (planillado - costo) / planillado * 100 : null,
     margenProy: eac != null ? ventaT - eac : null, margenProyPct: eac != null && ventaT > 0 ? (ventaT - eac) / ventaT * 100 : null,
     margenMeta: mt ? ventaT - mTot : null, margenMetaPct: mt && ventaT > 0 ? (ventaT - mTot) / ventaT * 100 : null,
@@ -123,18 +125,21 @@ function porMes() {
 
 /* ---------- datos ---------- */
 async function cargarObra() {
-  rubros = []; planillas = []; subs = []; subPls = []; gastos = []; roles = []; meta = null; sinTablas = false;
+  rubros = []; planillas = []; subs = []; subPls = []; gastos = []; roles = []; ocsC = []; factsC = []; meta = null; sinTablas = false;
   if (obraId) {
     const q = async (fn) => { try { const { data, error } = await fn(); return error ? null : data || []; } catch (_) { return null; } };
-    const [g, r, p, s, sp, mt, rl] = await Promise.all([
+    const [g, r, p, s, sp, mt, rl, oc] = await Promise.all([
       q(() => sb.from("gastos").select("*").eq("obra_id", obraId).order("fecha", { ascending: false })),
       q(() => sb.from("rubros").select("id,codigo,descripcion,unidad,cantidad,precio,costo,capitulo,adicional").eq("obra_id", obraId).order("orden")),
       q(() => sb.from("planillas").select("id,numero,fecha,estado,totales").eq("obra_id", obraId).order("numero")),
       q(() => sb.from("subcontratos").select("id,numero,contratista,estado,monto,items").eq("obra_id", obraId).order("numero")),
       q(() => sb.from("subcontrato_planillas").select("id,subcontrato_id,numero,fecha,estado,totales").eq("obra_id", obraId).order("numero")),
       esAdmin() ? q(() => sb.from("costos_meta").select("*").eq("obra_id", obraId)) : Promise.resolve([]),
-      q(() => sb.from("roles_pago").select("id,numero,desde,hasta,estado,totales").eq("obra_id", obraId).order("numero"))
+      q(() => sb.from("roles_pago").select("id,numero,desde,hasta,estado,totales").eq("obra_id", obraId).order("numero")),
+      q(() => sb.from("compras_ordenes").select("id,numero,estado,subtotal").eq("obra_id", obraId))
     ]);
+    ocsC = oc || [];
+    if (ocsC.length && esAdmin()) factsC = (await q(() => sb.from("compras_orden_facturas").select("orden_id,subtotal").in("orden_id", ocsC.map((x) => x.id)))) || [];
     if (g === null) sinTablas = true;
     gastos = g || []; rubros = r || []; planillas = p || []; subs = s || []; subPls = sp || []; meta = (mt || [])[0] || null; roles = rl || [];
   }
@@ -190,7 +195,7 @@ function htmlResumen() {
       ${kpi("Costo meta", k.meta ? money(k.metaTotal) : "Sin meta", "", k.meta ? "margen previsto " + pct(k.margenMetaPct) : `<button class="lnk" type="button" data-tab="meta">Definir meta →</button>`)}
       ${kpi("Costo proyectado al cierre", k.eac != null ? money(k.eac) : "—", "", k.avance >= 0.05 ? "costo real ÷ avance planillado" : k.meta ? "avance menor a 5 %: se usa la meta" : "avance menor a 5 %")}
       ${kpi("Margen proyectado", k.margenProy != null ? money(k.margenProy) : "—", clsMargen(k.margenProyPct), pct(k.margenProyPct) + " de la venta")}
-      ${kpi("Comprometido en subcontratos", money(k.comprometido), "", "saldo por planillar de contratos vigentes")}
+      ${kpi("Comprometido", money(k.comprometido + k.compras), "", "subcontratos por planillar " + money(k.comprometido) + " · órdenes de compra por facturar " + money(k.compras))}
     </div>
     ${k.meta && k.eac != null && k.eac > k.metaTotal * 1.02 ? `<div class="alertbar mal"><b>El costo proyectado supera la meta en ${money(k.eac - k.metaTotal)}.</b><span>Revisa abajo qué categoría se está pasando.</span></div>` : ""}
   </section>
@@ -426,7 +431,7 @@ function pdf() {
   }
   titulo("FLUJO DE CAJA DE LA OBRA");
   const cf = [["CONCEPTO", 140, "l"], ["VALOR", 46, "r"]];
-  [["Cobrado al cliente (planillas pagadas, valor bruto)", k.cobrado], ["Pagado en gastos y subcontratos", -k.pagado], ["SALDO DE CAJA", k.caja, true], ["Planillado por cobrar", k.planillado - k.cobrado], ["Por pagar (gastos pendientes y planillas de subcontratos aprobadas)", k.porPagar], ["Comprometido en subcontratos (saldo por planillar)", k.comprometido]]
+  [["Cobrado al cliente (planillas pagadas, valor bruto)", k.cobrado], ["Pagado en gastos y subcontratos", -k.pagado], ["SALDO DE CAJA", k.caja, true], ["Planillado por cobrar", k.planillado - k.cobrado], ["Por pagar (gastos pendientes y planillas de subcontratos aprobadas)", k.porPagar], ["Comprometido en subcontratos (saldo por planillar)", k.comprometido], ["Comprometido en órdenes de compra por facturar", k.compras]]
     .forEach(([t, v, b]) => fila(cf, [t, money(v)], b ? { bold: true, fill: SUB } : {}));
   // detalle de gastos
   if (gastos.length || k.costo > 0) {

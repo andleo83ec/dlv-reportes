@@ -37,7 +37,7 @@ const BASE = [
 ];
 
 let sb = null, user = null, perfil = null;
-let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [], rdiVencidos = [], acuVencidos = [], sinIess = [], docsPorLeer = [];
+let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [], rdiVencidos = [], acuVencidos = [], sinIess = [], docsPorLeer = [], comprasPend = null;
 const esAdmin = () => perfil && perfil.rol === "admin";
 
 /* ---------- datos ---------- */
@@ -76,6 +76,12 @@ async function cargarHoy() {
     sb.from("documento_lecturas").select("documento_id,version").eq("usuario_id", user.id)
   ]);
   const leidos = new Set((dl.data || []).map((x) => x.documento_id + "|" + x.version));
+  // compras: pedidos por aprobar (administrador) y órdenes emitidas pendientes de recibir
+  const [cp, co] = await Promise.all([
+    sb.from("compras_requerimientos").select("id,obra_id").eq("etapa", "pedido"),
+    sb.from("compras_ordenes").select("id,obra_id,fecha_entrega").in("estado", ["emitida", "parcial"])
+  ]);
+  comprasPend = cp.error || co.error ? null : { pedidos: perfil && perfil.rol === "admin" ? cp.data || [] : [], ordenes: co.data || [] };
   docsPorLeer = dn.error ? [] : (dn.data || []).filter((x) => x.version && !leidos.has(x.id + "|" + x.version));
   acuVencidos = ac.error ? [] : (ac.data || []).flatMap((x) => (x.acuerdos || []).filter((u) => u.estado !== "cumplido" && u.plazo && u.plazo <= ayer).map((u) => ({ ...u, obra_id: x.obra_id })));
 }
@@ -98,6 +104,7 @@ function render() {
       <div class="hoy-row">${obrasHoy.map((o) => `<a class="obra-chip ${o.reporte ? "ok" : "pend"}" href="/reportes"><span class="d"></span>${esc(o.nombre)}<small>${o.reporte ? "Reporte listo" : "Sin reporte"}</small></a>`).join("")}</div>
       ${pend.length ? `<span class="hint">${pend.length === 1 ? "1 obra" : pend.length + " obras"} sin reporte de hoy.</span>` : `<span class="hint">Todas las obras tienen su reporte de hoy.</span>`}</div>` : ""}
     ${rdiVencidos.length || acuVencidos.length ? `<a class="gar-alert" href="/rdi?obra=${encodeURIComponent((rdiVencidos[0] || acuVencidos[0]).obra_id)}&tab=${rdiVencidos.length ? "rdi" : "acuerdos"}"><b>Pendientes fuera de plazo</b><span>${[rdiVencidos.length ? rdiVencidos.length + (rdiVencidos.length === 1 ? " RDI sin respuesta" : " RDI sin respuesta") : "", acuVencidos.length ? acuVencidos.length + (acuVencidos.length === 1 ? " acuerdo de acta vencido" : " acuerdos de actas vencidos") : ""].filter(Boolean).join(" · ")}</span></a>` : ""}
+    ${comprasPend && (comprasPend.pedidos.length || comprasPend.ordenes.length) ? `<a class="gar-alert" href="/compras?obra=${encodeURIComponent(((comprasPend.pedidos[0] || comprasPend.ordenes[0]) || {}).obra_id || "")}${comprasPend.pedidos.length ? "" : "&tab=ordenes"}"><b>Compras pendientes</b><span>${[comprasPend.pedidos.length ? comprasPend.pedidos.length + (comprasPend.pedidos.length === 1 ? " pedido de obra por aprobar" : " pedidos de obra por aprobar") : "", comprasPend.ordenes.length ? comprasPend.ordenes.length + (comprasPend.ordenes.length === 1 ? " orden por recibir" : " órdenes por recibir") : "", comprasPend.ordenes.filter((o) => o.fecha_entrega && o.fecha_entrega < hoy()).length ? comprasPend.ordenes.filter((o) => o.fecha_entrega && o.fecha_entrega < hoy()).length + " con entrega atrasada" : ""].filter(Boolean).join(" · ")}</span></a>` : ""}
     ${docsPorLeer.length ? `<a class="gar-alert" href="/documentos${docsPorLeer.length === 1 ? "?doc=" + encodeURIComponent(docsPorLeer[0].id) : ""}"><b>${docsPorLeer.length === 1 ? "1 documento nuevo o actualizado" : docsPorLeer.length + " documentos nuevos o actualizados"} por leer</b><span>${docsPorLeer.slice(0, 3).map((x) => esc(x.codigo + " · " + x.titulo)).join(" · ")}</span></a>` : ""}
     ${sinIess.length ? `<a class="gar-alert" href="/personal?tab=trabajadores&obra=${encodeURIComponent(sinIess[0].obra_id || "")}"><b>${sinIess.length === 1 ? "1 trabajador sin" : sinIess.length + " trabajadores sin"} aviso de entrada al IESS</b><span>${sinIess.slice(0, 3).map((t) => { const ob = (obrasHoy || []).find((o) => o.id === t.obra_id); return esc(t.nombres + (ob ? " · " + ob.nombre : "")); }).join(" · ")}</span></a>` : ""}
     ${garPorVencer.length ? `<a class="gar-alert" href="/subcontratos?tab=garantias&obra=${encodeURIComponent(garPorVencer[0].obra_id)}"><b>${garPorVencer.length === 1 ? "1 garantía vence" : garPorVencer.length + " garantías vencen"} en los próximos 30 días o ya vencieron</b><span>${garPorVencer.slice(0, 3).map((g) => { const ob = (obrasHoy || []).find((o) => o.id === g.obra_id); return esc((ob ? ob.nombre + " · " : "") + g.vencimiento.split("-").reverse().join("/")); }).join(" · ")}</span></a>` : ""}
