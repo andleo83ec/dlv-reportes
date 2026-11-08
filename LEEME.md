@@ -11,6 +11,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/subcontratos` | Subcontratos y garantías: contratos, planillas de subcontratistas, pólizas y evaluación |
 | `/rdi` | RDI, actas de reunión con seguimiento de acuerdos y registro de correspondencia |
 | `/tablero` | Tablero gerencial de todas las obras e informe semanal en PDF |
+| `/ciclo` | Inicio y cierre de obra: listas de arranque y cierre, recepción, balance final y encuesta al cliente |
 | `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
@@ -24,6 +25,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/rdi.sql` | RDI, actas y correspondencia | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/tablero.sql` | Activa el tablero en el menú (no crea tablas) | Se pega una vez en Supabase → SQL Editor |
 | `supabase/propuestas.sql` | Propuestas y cotizaciones (solo administradores) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/ciclo.sql` | Inicio y cierre de obra | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -113,3 +115,12 @@ Para que la curva y el semáforo sirvan, cada obra necesita su **inicio y plazo*
 7. **Adjudicada:** «Crear la obra con este presupuesto» crea la obra y carga sus rubros a precio de oferta en Estado de pago, listos para planillar.
 
 Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (signo menos, visto, casillas).
+
+## Inicio y cierre de obra (`/ciclo`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/ciclo.sql` (activa también el programa en el menú).
+2. **Inicio:** fecha de inicio contractual y plazo (los usa el tablero gerencial; solo el admin los cambia), entrega de la obra adjudicada (12 puntos) y análisis previo a la ejecución (12 puntos).
+3. **Cierre:** fechas de recepción provisional y definitiva (calcula el plazo real), balance final con Estado de pago y Subcontratos, desmovilización, recepción y entrega al cliente, y certificados municipales y de servicios de Cuenca (Bomberos, Centrosur, ETAPA…).
+4. Cada punto cumplido guarda fecha, responsable y dónde está el documento. Algunos muestran lo que la plataforma ya sabe (rubros cargados, pólizas, actas, RDI, subcontratos terminados). Se pueden agregar puntos propios de cada obra.
+5. **Encuesta al cliente** (6 criterios de 1 a 5 y si nos recomendaría) y **lecciones aprendidas**.
+6. **PDF** del protocolo de inicio o de cierre, con firmas.

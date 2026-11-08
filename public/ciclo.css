@@ -1,0 +1,19 @@
+/* Inicio y cierre de obra: pestañas por fase, avance de la lista y puntos con fecha, responsable y nota al cumplirse */
+.meter.big{height:10px}
+.h3n{font-family:var(--display);font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em;color:var(--navy);margin:0}
+.cks{display:flex;flex-direction:column;gap:6px}
+.ck{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.ck.hecho{border-color:var(--ok);background:var(--ok-bg)}
+.ck .chk{border:0;background:transparent;padding:0;align-items:flex-start;padding-right:26px}
+.ck .chk span{display:flex;flex-direction:column;gap:2px}
+.ck .det{font-style:normal;font-size:.76rem;color:var(--navy);font-family:var(--mono)}
+.ck .x{position:absolute;top:4px;right:4px}
+.ckx{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1fr) minmax(0,2fr);gap:6px}
+.ckx input{padding:6px 8px;font-size:14px}
+@media (max-width:560px){.ckx{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ckx input:last-child{grid-column:1/-1}}
+.addrow{display:flex;gap:8px}
+.addrow input{flex:1;min-width:0}
+.kv2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:.88rem}
+.kv2 span{color:var(--muted)}
+.kv2 b{font-family:var(--mono);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.kv2 b.rojo{color:var(--bad)}
