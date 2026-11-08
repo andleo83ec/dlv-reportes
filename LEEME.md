@@ -1,12 +1,19 @@
-# DLV Reportes (Cloudflare Pages)
+# DLV Plataforma (Cloudflare Pages)
 
-App web del reporte diario de obra de DLV Construcciones (formato DLV-FOR-RDO-01).
+Plataforma web interna de DLV Construcciones: portal de inicio con el menú de programas, reporte diario de obra (formato DLV-FOR-RDO-01) y visor 3D de avance.
+
+| Dirección | Programa |
+|---|---|
+| `/` | Portal: menú de programas y estado de los reportes del día |
+| `/reportes` | Reporte diario de obra |
+| `/visor` | Visor 3D y avance (modelo IFC) |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
 | `public/` | La app (pantallas, PDF, íconos) | Cloudflare Pages la publica |
 | `functions/api/` | Funciones del servidor (configuración, fotos y modelos IFC) | Cloudflare Pages las ejecuta |
 | `supabase/schema.sql` | Tablas, usuarios y permisos | Se pega una vez en Supabase → SQL Editor |
+| `supabase/portal.sql` | Menú de programas del portal | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -34,3 +41,13 @@ La guía completa está en el documento "Guía de instalación DLV Reportes".
    **Pasar al reporte** agrega cada registro como actividad (con m³), sus fotos al panel fotográfico y los observados a novedades.
 
 El avance se guarda por GUID de cada elemento, así que una nueva exportación del mismo proyecto de ArchiCAD conserva lo registrado.
+
+## Agregar un programa al menú
+
+En el portal (`/`), un administrador toca **Administrar** y luego **Agregar programa**:
+
+- **Programa de esta misma plataforma:** su página va en `public/` (por ejemplo `public/hierro.html`) y en el menú se registra con la dirección `/hierro`. Comparte el login y la base de datos.
+- **Programa en otro repositorio o servidor** (Vercel, otra app de Cloudflare, una web): se registra con su dirección completa `https://…` y se abre en otra pestaña.
+- **Programa en desarrollo:** estado «En desarrollo» y sin dirección; aparece en el menú, atenuado y sin enlace.
+
+Los cambios del menú se ven al instante para todos, sin publicar código. Los programas marcados «Solo administradores» no aparecen a los residentes.

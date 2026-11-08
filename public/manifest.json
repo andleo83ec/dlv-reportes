@@ -1,6 +1,6 @@
 {
-  "name": "Reporte Diario DLV",
-  "short_name": "Reportes DLV",
+  "name": "DLV Plataforma",
+  "short_name": "DLV",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#eef0f2",

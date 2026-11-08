@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Reporte Diario DLV</title>
+<title>DLV Plataforma</title>
+<meta name="description" content="Programas internos de DLV Construcciones Cía. Ltda.">
 <meta name="theme-color" content="#1d3557">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Reportes DLV">
+<meta name="apple-mobile-web-app-title" content="DLV">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="/icon-180.png">
 <link rel="icon" type="image/png" href="/icon-192.png">
@@ -14,33 +15,22 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/portal.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
+<body class="portal">
 <div class="wrap">
   <header class="top" id="top" hidden>
     <div class="brand">
-      <div class="logo"><b>DLV</b><span>Reporte diario de obra</span></div>
+      <div class="logo"><b>DLV</b><span>Plataforma de obra</span></div>
       <div class="user"><span id="quien"></span><button class="btn sm ghost" id="btnSalir" type="button">Salir</button></div>
-    </div>
-    <div class="obra-row">
-      <label class="fld" for="obraSel"><span>Obra</span><select id="obraSel"><option value="">Cargando obras…</option></select></label>
-      <button class="btn" id="btnNuevaObra" type="button" hidden>+ Obra</button>
     </div>
   </header>
   <main id="main"><div class="empty">Cargando…</div></main>
+  <footer class="pfoot" id="pfoot" hidden>DLV Construcciones Cía. Ltda. · Cuenca, Ecuador</footer>
 </div>
-
-<div class="dock" id="dock" hidden><div class="in">
-  <button class="btn ghost" id="btnVolver" type="button">← Reportes</button>
-  <span class="state" id="estado"></span>
-  <button class="btn" id="btnPDF" type="button">PDF</button>
-  <button class="btn primary" id="btnGuardar" type="button">Guardar</button>
-</div></div>
+<div id="sheetRoot"></div>
 <div class="toast" id="toast" hidden></div>
-<input type="file" id="fotoIn" accept="image/*" class="vh" multiple>
-<script src="/pdf.js"></script>
-<script src="/app.js"></script>
+<script src="/portal.js"></script>
 </body>
 </html>
