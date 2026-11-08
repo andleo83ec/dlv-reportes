@@ -1,0 +1,50 @@
+/* Tablero gerencial: tarjetas por obra con semáforo y tres barras (tiempo, físico, económico); detalle con curva de avance */
+.wrap{max-width:1080px}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.tcard{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:10px;padding:12px 14px;font:inherit;color:inherit;width:100%}
+.tcard:hover{border-color:var(--navy)}
+.tcard.s-aviso,.obracard.s-aviso{border-left:5px solid var(--hivis)}
+.tcard.s-mal,.obracard.s-mal{border-left:5px solid var(--bad)}
+.obracard.s-ok{border-left:5px solid var(--ok)}
+.th{display:flex;align-items:center;gap:8px}
+.th b{flex:1;font-size:1rem;min-width:0}
+.dot{width:10px;height:10px;border-radius:99px;flex:none;background:var(--ok)}
+.dot.s-aviso{background:var(--hivis)}
+.dot.s-mal{background:var(--bad)}
+.pill.sp-ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pill.sp-aviso{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.sp-mal{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+.bar3{display:grid;grid-template-columns:78px minmax(0,1fr) 48px;gap:8px;align-items:center;font-size:.8rem}
+.bar3 span{color:var(--muted)}
+.bar3 b{font-family:var(--mono);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.bar3 .meter{height:7px}
+.meter.t i{background:var(--muted)}
+.meter.f i{background:var(--navy)}
+.meter.e i{background:var(--ok)}
+.meter.b i{background:var(--hivis)}
+.mot{margin:0;padding-left:18px;font-size:.82rem;color:var(--ink);display:flex;flex-direction:column;gap:2px}
+.mot.big{font-size:.9rem}
+.kpis b.rojo,.kv2 b.rojo{color:var(--bad)}
+.tbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tbh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tbh h3{font-family:var(--display);font-size:1.2rem;text-transform:uppercase;letter-spacing:.04em;color:var(--navy)}
+.tcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.kv2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:.86rem}
+.kv2 span{color:var(--muted)}
+.kv2 b{font-family:var(--mono);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.mini{display:flex;flex-direction:column;gap:4px;font-size:.8rem}
+.mini div{display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:4px}
+.mini span:first-child{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini b{font-family:var(--mono);font-weight:500}
+.chartwrap{overflow-x:auto}
+.chartwrap svg{width:100%;min-width:320px;height:auto;display:block}
+.chartwrap .grid{stroke:var(--line);stroke-width:1}
+.chartwrap .ax{fill:var(--muted);font-size:10px;font-family:var(--mono)}
+.chartwrap .prog{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
+.chartwrap .hoy{stroke:var(--hivis);stroke-width:1.5}
+.chartwrap .real{stroke:var(--navy);stroke-width:2.5;fill:none;stroke-linejoin:round}
+.chartwrap .realpt{fill:var(--navy)}
+.chartwrap .lbl{fill:var(--ink);font-size:11px;font-weight:600;font-family:var(--mono)}
+.leg{display:flex;gap:14px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.leg i{display:inline-block;width:16px;height:0;border-top:2.5px solid var(--navy);vertical-align:middle;margin-right:6px}
+.leg i.lp{border-top:1.5px dashed var(--muted)}

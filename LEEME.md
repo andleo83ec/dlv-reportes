@@ -10,6 +10,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/planillas` | Estado de pago: presupuesto por obra y planillas al mandante con PDF |
 | `/subcontratos` | Subcontratos y garantías: contratos, planillas de subcontratistas, pólizas y evaluación |
 | `/rdi` | RDI, actas de reunión con seguimiento de acuerdos y registro de correspondencia |
+| `/tablero` | Tablero gerencial de todas las obras e informe semanal en PDF |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
@@ -20,6 +21,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/planillas.sql` | Presupuesto (rubros) y planillas del estado de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/subcontratos.sql` | Subcontratos, sus planillas y garantías | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/rdi.sql` | RDI, actas y correspondencia | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/tablero.sql` | Activa el tablero en el menú (no crea tablas) | Se pega una vez en Supabase → SQL Editor |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -86,3 +88,14 @@ Los montos se escriben como en Ecuador: `3.096` es tres mil noventa y seis y `1,
 5. **Oficios:** registro de correspondencia enviada (OF-001…) y recibida (REC-001…), con plazo cuando espera respuesta y dónde está el original.
 
 El portal avisa cuando hay RDI sin respuesta o acuerdos de actas fuera de plazo.
+
+## Tablero gerencial (`/tablero`)
+
+No tiene datos propios: lee los de los demás programas (si alguno no está activado, esa parte queda en blanco).
+
+- **Todas las obras:** semáforo (al día, atención, en riesgo) con el motivo, y tres barras: tiempo transcurrido del plazo, avance físico (el % del último reporte diario) y avance económico (planillado sobre el contrato). Arriba, el total contratado, planillado y por cobrar.
+- **En riesgo** si el plazo venció sin terminar, el atraso pasa de 10 puntos, hay más de 3 días sin reporte, una póliza vencida o RDI sin respuesta fuera de plazo. **Atención** con atraso de 5 a 10 puntos, pólizas por vencer, acuerdos vencidos o incidentes de seguridad.
+- **Detalle de la obra:** curva de avance real contra programado lineal, plazo, reportes, estado de pago, subcontratos y pendientes, con acceso directo a cada programa.
+- **Informe semanal en PDF:** elige la semana y arma el informe con avance físico y económico, personal y clima por día, actividades sumadas, avance en el modelo 3D, novedades y seguridad, pendientes, 4 fotos y firmas.
+
+Para que la curva y el semáforo sirvan, cada obra necesita su **inicio y plazo** (Editar obra) y el **% de avance físico acumulado** en cada reporte diario.
