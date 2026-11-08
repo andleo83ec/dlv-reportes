@@ -149,6 +149,55 @@ async function subirFotos(files) {
   }
 }
 
+/* ---------- avance del visor 3D (avance_registros) ---------- */
+const BIM_EST = { ni: "No iniciado", ej: "En ejecución", ok: "Terminado", ob: "Observado" };
+const bimCache = {};
+const bimLabel = (r) => BIM_EST[r.estado] + (r.estado === "ej" || r.estado === "ob" ? " " + Math.round(r.pct) + " %" : "");
+async function cargarBimDia() {
+  if (!draft || !$("#bimDia")) return;
+  const k = draft.obraId + "|" + draft.fecha;
+  if (!bimCache[k]) {
+    const { data, error } = await sb.from("avance_registros").select("id,fecha,estado,pct,nota,resumen,niveles,fotos,autor,total,volumen")
+      .eq("obra_id", draft.obraId).eq("fecha", draft.fecha).order("creado");
+    if (error) { const b = $("#bimDia"); if (b) b.innerHTML = `<span class="code">El visor 3D todavía no está activado en Supabase (falta ejecutar avance_bim.sql).</span>`; return; }
+    bimCache[k] = data || [];
+  }
+  const rows = bimCache[k], box = $("#bimDia");
+  if (!box || !draft || draft.obraId + "|" + draft.fecha !== k) return;
+  const ya = new Set(draft.bim || []);
+  $("#bimSum").textContent = rows.length ? rows.length + " registros" : "";
+  box.innerHTML = rows.length ? `<div class="bimlist">${rows.map((r) => `
+    <div class="bimrow"><div class="bimtop"><span class="bimst bimst-${esc(r.estado)}">${esc(bimLabel(r))}</span><b>${esc(r.resumen || r.total + " elementos")}</b>${ya.has(r.id) ? `<span class="pill">en el reporte</span>` : ""}</div>
+      <span class="code">${esc(r.niveles || "")}${r.volumen ? " · " + esc(String(r.volumen).replace(".", ",")) + " m³" : ""}${r.autor ? " · " + esc(r.autor) : ""}</span>
+      ${r.nota ? `<span>${esc(r.nota)}</span>` : ""}
+      ${(r.fotos || []).length ? `<div class="bimth">${r.fotos.map((f) => `<img data-key="${esc(f.key)}" alt="Foto de avance">`).join("")}</div>` : ""}</div>`).join("")}</div>`
+    : `<span class="code">Sin avances registrados en el visor para el ${fmtF(draft.fecha)}.</span>`;
+  const btn = $("#bimBtn"); if (btn) btn.hidden = !rows.some((r) => !ya.has(r.id));
+  pintarFotos();
+}
+function traerBim() {
+  const rows = bimCache[draft.obraId + "|" + draft.fecha] || [];
+  draft.bim = draft.bim || [];
+  let na = 0, nf = 0, sinCupo = 0;
+  draft.actividades = draft.actividades.filter((a) => a.cod || a.desc || a.cant);
+  for (const r of rows) {
+    if (draft.bim.includes(r.id)) continue;
+    draft.actividades.push({ cod: "", desc: (r.resumen || r.total + " elementos") + " — " + bimLabel(r), ubic: r.niveles || "", und: r.volumen ? "m³" : "", cant: r.volumen ? String(r.volumen) : "", bim: r.id });
+    na++;
+    if (r.estado === "ob") draft.novedades.push("Observado en " + (r.resumen || "elementos") + (r.niveles ? " (" + r.niveles + ")" : "") + (r.nota ? ": " + r.nota : ""));
+    for (const f of r.fotos || []) {
+      if (draft.fotos.some((x) => x.key === f.key)) continue;
+      if (draft.fotos.length >= 6) { sinCupo++; continue; }
+      draft.fotos.push({ key: f.key, w: f.w, h: f.h, desc: (r.resumen || "") + " — " + bimLabel(r), ubic: r.niveles || "" });
+      nf++;
+    }
+    draft.bim.push(r.id);
+  }
+  if (!draft.actividades.length) draft.actividades = [{ cod: "", desc: "", ubic: "", und: "", cant: "" }];
+  setDirty(true); render();
+  toast(`${na} actividades y ${nf} fotos pasadas al reporte` + (sinCupo ? ` (${sinCupo} fotos no entraron: máximo 6)` : ""));
+}
+
 /* ---------- render ---------- */
 function renderObras() {
   const s = $("#obraSel");
@@ -161,7 +210,7 @@ function render() {
   $("#dock").hidden = view !== "editor";
   if (!user) return renderLogin(m);
   if (view === "obra") return renderObraForm(m);
-  if (view === "editor") { renderEditor(m); pintarFotos(); return; }
+  if (view === "editor") { renderEditor(m); pintarFotos(); cargarBimDia(); return; }
   renderLista(m);
 }
 function renderLogin(m) {
@@ -194,7 +243,7 @@ function renderLista(m) {
       <div><small>Plazo</small><span>${o.plazo ? esc(o.plazo) + " días · inicio " + fmtF(o.inicio) : "—"}</span></div>
       <div><small>Hoy</small><span>${di.trans !== "" ? `Día ${di.trans}${di.rest !== "" ? ` · ${di.rest} restantes` : ""}` : "—"}</span></div>
     </div>
-    ${esAdmin() ? `<div><button class="btn sm" type="button" data-act="editarObra">Editar obra y residentes</button></div>` : ""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm primary" href="/visor.html?obra=${encodeURIComponent(o.id)}">Visor 3D y avance</a>${esAdmin() ? `<button class="btn sm" type="button" data-act="editarObra">Editar obra y residentes</button>` : ""}</div>
   </section>
   <div class="listhead"><h1>Reportes</h1><button class="btn hivis" type="button" data-act="nuevoRep">+ Reporte de hoy</button></div>
   <div class="list">${reportes.length ? reportes.map((r) => {
@@ -304,6 +353,11 @@ function renderEditor(m) {
       <div class="rows">${d.novedades.map((t, i) => `<div class="r r-nov">${inp(`novedades.${i}`, `Novedad ${i + 1}`)}<button class="x" type="button" data-del="novedades.${i}" aria-label="Quitar novedad">×</button></div>`).join("")}</div>
       <button class="btn sm add" type="button" data-add="novedades">+ Novedad</button>
     </div></details>
+  <details class="sec" open><summary><span class="num">3D</span><h2>Avance en el modelo</h2><span class="sum" id="bimSum"></span></summary>
+    <div class="body">
+      <div id="bimDia"><span class="code">Buscando avances registrados en el visor…</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm hivis" type="button" data-act="bimTraer" id="bimBtn" hidden>Pasar al reporte</button><a class="btn sm" href="/visor.html?obra=${encodeURIComponent(d.obraId)}">Abrir visor 3D</a></div>
+    </div></details>
   <details class="sec" open><summary><span class="num">9</span><h2>Panel fotográfico</h2><span class="sum">${d.fotos.length}/6</span></summary>
     <div class="body"><div class="fotos">
       ${d.fotos.map((f, i) => `
@@ -366,6 +420,7 @@ document.addEventListener("click", async (e) => {
   if (a === "cancelDel") { confirmDel = null; render(); return; }
   if (a === "nuevoRep") { const o = obraActual(); if (!o) return; draft = nuevoReporte(o); confirmDel = null; view = "editor"; setDirty(true); render(); window.scrollTo(0, 0); return; }
   if (a === "borrarRep") { confirmDel = "rep"; render(); return; }
+  if (a === "bimTraer") return traerBim();
   if (a === "borrarRepOk") return borrarRep();
   if (b.id === "btnVolver") {
     if (dirty && !b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "¿Salir sin guardar?"; setTimeout(() => { b.dataset.sure = ""; b.textContent = "← Reportes"; }, 3000); return; }

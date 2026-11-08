@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Avance BIM · DLV</title>
+<meta name="theme-color" content="#1d3557">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Reportes DLV">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/visor.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="bar">
+    <a class="back" href="/" aria-label="Volver a los reportes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg><span>Reportes</span></a>
+    <label class="obra" for="obraSel"><span class="vh">Obra</span><select id="obraSel"><option value="">Cargando…</option></select></label>
+    <button class="btn" id="openBtn" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 0-4 4m4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>IFC</span></button>
+    <input type="file" id="fileIn" hidden>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="cv" aria-label="Modelo 3D de la obra"></canvas>
+    <div class="legend" id="legend"></div>
+    <div class="tools" id="tools" hidden>
+      <button class="tool" id="tHome" type="button" title="Vista inicial" aria-label="Vista inicial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg></button>
+      <button class="tool" id="tMulti" type="button" title="Selección múltiple" aria-label="Selección múltiple" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M13 7h4a2 2 0 0 1 2 2v2M11 17H7a2 2 0 0 1-2-2v-2"/></svg></button>
+      <button class="tool" id="tFocus" type="button" title="Enfocar selección" aria-label="Enfocar selección"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg></button>
+      <button class="tool" id="tDim" type="button" title="Atenuar lo no iniciado" aria-label="Atenuar lo no iniciado" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 0 18z" fill="currentColor"/><circle cx="12" cy="12" r="9"/></svg></button>
+    </div>
+    <div class="msg" id="msg" hidden></div>
+    <div class="bstack"><div class="sel-count" id="selCount" hidden></div><div class="banner" id="banner" hidden></div></div>
+    <div class="loading" id="loading" hidden><div class="box"><div class="t" id="loadT">Abriendo modelo</div><div class="bar-track"><div class="bar-fill" id="loadBar"></div></div><div class="eyebrow" id="loadS"></div></div></div>
+  </main>
+
+  <aside class="panel" id="panel">
+    <button class="panel-grip" id="grip" type="button" aria-label="Cambiar tamaño del panel"><span></span></button>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" type="button" data-tab="reg" aria-selected="true">Registrar</button>
+      <button class="tab" role="tab" type="button" data-tab="res" aria-selected="false">Resumen</button>
+      <button class="tab" role="tab" type="button" data-tab="fil" aria-selected="false">Vista</button>
+      <button class="tab" role="tab" type="button" data-tab="log" aria-selected="false">Bitácora</button>
+    </div>
+    <div class="pane" id="pane"></div>
+  </aside>
+</div>
+<div id="sheetRoot"></div>
+<input type="file" id="fotoIn" accept="image/*" multiple hidden>
+<script src="/ifc-core.js"></script>
+<script src="/visor.js"></script>
+</body>
+</html>

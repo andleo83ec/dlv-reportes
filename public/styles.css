@@ -17,6 +17,7 @@
   --ok:#6cc792; --ok-bg:#183024; --warn:#f0b43a; --warn-bg:#2e2410; --bad:#f08b80; --bad-bg:#3a1a17; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:env(safe-area-inset-top,0px) calc(110px + env(safe-area-inset-bottom,0px))}
 .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
@@ -156,3 +157,15 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .user{display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--muted)}
 .miembros{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
 html{background:var(--bg)}
+
+/* avance del visor 3D en el reporte */
+.bimlist{display:flex;flex-direction:column;gap:8px}
+.bimrow{display:flex;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:.9rem}
+.bimtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bimst{font-family:var(--mono);font-size:.68rem;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.bimst-ok{background:var(--ok-bg);color:var(--ok)}
+.bimst-ej{background:var(--warn-bg);color:var(--warn)}
+.bimst-ob{background:var(--bad-bg);color:var(--bad)}
+.bimst-ni{background:var(--field);color:var(--muted)}
+.bimth{display:flex;gap:6px;flex-wrap:wrap}
+.bimth img{width:64px;height:64px;object-fit:cover;border-radius:6px;background:var(--field)}
