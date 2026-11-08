@@ -77,3 +77,15 @@ table.cmp{border-collapse:collapse;width:100%;font-size:.8rem;min-width:520px}
 .tres small{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .tres b{font-family:var(--mono);font-weight:500;font-size:.95rem}
 .meter.sm{height:5px}
+/* WhatsApp */
+.wa{font-style:normal;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:2px;padding:0 4px;vertical-align:middle}
+.wams{display:flex;flex-direction:column;gap:8px}
+.wam{display:flex;flex-direction:column;gap:4px;border-left:2px solid var(--line);padding:4px 0 4px 10px;font-size:.86rem}
+.wam.entrada{border-left-color:var(--ok)}
+.wam .h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wam .tx{white-space:pre-wrap;overflow-wrap:anywhere}
+.wam .tr{color:var(--muted);font-style:italic;white-space:pre-wrap}
+.alias{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.pill.gp-ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pill.gp-mal{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+@media (max-width:520px){.segtabs button{font-size:.8rem;padding-left:4px;padding-right:4px;min-width:0;overflow-wrap:anywhere}}

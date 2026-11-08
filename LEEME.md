@@ -16,12 +16,14 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/personal` | Personal: trabajadores, asistencia diaria, avisos de entrada al IESS y roles de pago |
 | `/documentos` | Control de documentos: listado maestro, versiones con archivo, revisiones y acuse de lectura |
 | `/compras` | Compras: pedido de obra o cotización, comparativo, orden de pedido, recepción y factura |
+| `/facturas` | Facturas SRI: las de proveedores llegan por correo, se validan en el SRI y se asignan a la obra (solo admin) |
 | `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
 | `public/` | La app (pantallas, PDF, íconos) | Cloudflare Pages la publica |
 | `functions/api/` | Funciones del servidor (configuración, fotos y modelos IFC) | Cloudflare Pages las ejecuta |
+| `worker/` | Servicio **dlv-integraciones**: correo de facturas, consultas al SRI y WhatsApp | Un Worker aparte en Cloudflare (ver más abajo) |
 | `supabase/instalar_todo.sql` | **Todo junto, en orden** (base + todos los módulos) | Se pega una sola vez en Supabase → SQL Editor; se puede repetir sin perder datos |
 | `supabase/schema.sql` | Tablas, usuarios y permisos | Se pega una vez en Supabase → SQL Editor |
 | `supabase/portal.sql` | Menú de programas del portal | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
@@ -35,6 +37,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/personal.sql` | Personal y roles de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/documentos.sql` | Control de documentos | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/compras.sql` | Compras | Se pega una vez en Supabase → SQL Editor, después de `costos.sql`. Reemplaza los permisos de `002_compras.sql` del módulo dlv-compras |
+| `supabase/integraciones.sql` | Facturas por correo y pedidos por WhatsApp | Se pega una vez en Supabase → SQL Editor, después de `compras.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -169,4 +172,19 @@ Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (s
 4. **Orden de pedido (OC):** se revisa y se emite; PDF con firmas y botón para enviarla por WhatsApp al proveedor. Se puede anular mientras no tenga recepciones.
 5. **Recepción (GE):** el residente registra lo recibido y rechazado con la guía de remisión, transportista y placa; acepta entregas parciales y no deja recibir más de lo pendiente. PDF del acta de recepción.
 6. **Factura:** el administrador la registra (o la elige entre las que llegaron por correo, si está el lector de facturas) y ve el cruce **pedido / recibido / facturado** sin IVA: cuadra si la diferencia es menor al 1 % (mínimo $1). Al guardarla, el subtotal entra como **gasto** de la obra en Control de costos, y las órdenes emitidas aún sin factura aparecen como **comprometido**.
-7. El portal avisa de pedidos por aprobar, órdenes por recibir y entregas atrasadas. Los pedidos por WhatsApp del módulo dlv-compras quedan para una segunda fase.
+7. El portal avisa de pedidos por aprobar, órdenes por recibir y entregas atrasadas. Los pedidos por WhatsApp llegan aquí también (ver la sección siguiente).
+
+## Facturas por correo y pedidos por WhatsApp (`/facturas` y Compras → WhatsApp)
+
+Juntan en la plataforma los módulos **dlv-facturas** y **dlv-compras/WhatsApp**. Las pantallas viven en Pages; lo que recibe correos, consulta al SRI cada 15 minutos y atiende a WhatsApp es un Worker aparte (`worker/`), porque Pages no puede recibir correos ni correr tareas programadas.
+
+1. **Base de datos:** ejecuta `supabase/integraciones.sql` (después de `compras.sql`), o vuelve a correr `instalar_todo.sql`, que ya lo incluye. Todas las tablas quedan solo para administradores; el Worker entra con la clave de servicio.
+2. **Crear el Worker:** Cloudflare → Workers & Pages → Create → *Import a repository* → `dlv-reportes`, con **Root directory = `worker`**. El `wrangler.toml` ya trae el nombre (`dlv-integraciones`), la tarea cada 15 minutos, el bucket `dlv-fotos` y Workers AI (para las notas de voz).
+3. **Variables** (Settings → Variables): revisa en `wrangler.toml` `SUPABASE_URL`, `RUC_EMPRESA` (RUC de DLV; varios separados por coma), `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_NUMERO` y `APP_URL`. **Secretos:** `SUPABASE_SERVICE_KEY` (obligatorio), `WHATSAPP_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN` (una frase que tú inventas) y, opcional, `ANTHROPIC_API_KEY` para leer fotos de listas escritas a mano.
+4. **Correo de facturas:** Cloudflare → tu dominio → Email → Email Routing → crea `facturas@tudominio` con acción **Send to a Worker → dlv-integraciones**. Pide a los proveedores que manden ahí el XML/PDF (o reenvía ese correo desde el que ya usan). Cada factura se valida en el SRI; si el SRI no responde, se reintenta sola.
+5. **Unir Pages con el Worker:** en el proyecto de Pages → Settings → Bindings → *Service binding* llamado **`INTEGRACIONES`** → `dlv-integraciones`. (Alternativa: variable `INTEGRACIONES_URL` con la dirección `https://dlv-integraciones.<tu-cuenta>.workers.dev`.) Vuelve a desplegar Pages.
+6. **WhatsApp (Meta):** en developers.facebook.com → tu app → WhatsApp → Configuration, Webhook = `https://dlv-integraciones.<tu-cuenta>.workers.dev/webhook`, Verify token = el mismo `WHATSAPP_VERIFY_TOKEN`, y suscribe el campo **messages**. Usa un token permanente de usuario del sistema.
+7. **En la plataforma:** Compras → pestaña **WhatsApp**: agrega los números autorizados (residentes) y los nombres cortos de cada obra («turi», «casa ejemplo»). Un mensaje como «Pedido Turi / 20 sacos cemento / 2 m3 arena / Urgente», una nota de voz o la foto de una lista crea un **pedido de obra por aprobar**. Al aprobar, pasar a cotización o rechazar, el residente recibe el aviso por WhatsApp (si pasaron más de 24 h desde su último mensaje, Meta no deja escribirle sin plantilla y la plataforma lo indica). También puede consultar «estado» o confirmar «recibido OC-2026-0012» con la foto de la guía.
+8. **Facturas SRI** (`/facturas`): las que llegan quedan **por asignar** con la obra sugerida (por proveedor o por las reglas de palabras). Al asignarlas entran como gasto en Control de costos, o se vinculan a una orden de compra abierta; las de oficina se marcan "No es de obra". Las notas de crédito restan. En **Conciliar** se sube el TXT de *Comprobantes recibidos* del SRI para traer las que no llegaron por correo. Una factura asignada aquí no se duplica si luego se registra en la orden de Compras.
+9. Si el Worker no está configurado, las pantallas siguen funcionando con lo que ya está en la base y lo indican.
+

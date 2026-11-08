@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Facturas SRI · DLV</title>
+<meta name="theme-color" content="#3a3d40">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DLV">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/planillas.css">
+<link rel="stylesheet" href="/subcontratos.css">
+<link rel="stylesheet" href="/facturas.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top" id="top" hidden>
+    <div class="brand">
+      <div class="logo"><b>DLV</b><span>Facturas de proveedores</span></div>
+      <div class="user"><a class="btn sm" href="/">Menú DLV</a><span id="quien"></span></div>
+    </div>
+  </header>
+  <main id="main"><div class="empty">Cargando…</div></main>
+</div>
+<div class="dock" id="dock" hidden><div class="in">
+  <button class="btn ghost" id="btnVolver" type="button">← Volver</button>
+  <span class="state" id="estado"></span>
+  <button class="btn" id="btnPDF" type="button">PDF</button>
+  <button class="btn primary" id="btnGuardar" type="button">Guardar</button>
+</div></div>
+<div class="toast" id="toast" hidden></div>
+<script src="/facturas.js"></script>
+</body>
+</html>

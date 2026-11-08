@@ -1,0 +1,39 @@
+# Servicio de integraciones de la Plataforma DLV: correo de facturas del SRI + pedidos por WhatsApp.
+# Se despliega desde este mismo repositorio: Cloudflare → Workers & Pages → Create → Import a repository
+# → dlv-reportes → Root directory: worker
+name = "dlv-integraciones"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Reintenta cada 15 minutos las facturas que el SRI todavía no devuelve
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Mismo bucket de la plataforma: las facturas van en facturas/ y los adjuntos de WhatsApp en whatsapp/
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "dlv-fotos"
+
+# Transcripción de notas de voz con Whisper (Workers AI)
+[ai]
+binding = "AI"
+
+[vars]
+SUPABASE_URL = "https://TU-PROYECTO.supabase.co"
+# RUC de DLV (y de otras empresas del grupo, separados por coma): solo esas facturas se cargan
+RUC_EMPRESA = "0190000000001"
+# WhatsApp (Meta → WhatsApp → API Setup)
+WHATSAPP_PHONE_NUMBER_ID = ""
+WHATSAPP_NUMERO = ""          # el número de pedidos tal como lo verá el equipo, p. ej. 099 123 4567
+GRAPH_VERSION = "v23.0"
+APP_URL = "https://TU-PLATAFORMA.pages.dev/compras"   # enlace que se envía a obra
+# FORWARD_TO = "contabilidad@tudominio.com"           # opcional: copia de cada correo de facturas
+# ANTHROPIC_MODEL = "claude-haiku-5-5"                # opcional
+
+# Secretos (Cloudflare → este Worker → Settings → Variables and Secrets → Add → Secret):
+#   SUPABASE_SERVICE_KEY    Supabase → Project Settings → API → service_role
+#   WHATSAPP_TOKEN          token permanente del usuario del sistema (Meta Business)
+#   WHATSAPP_APP_SECRET     App secret de la app de Meta
+#   WHATSAPP_VERIFY_TOKEN   texto inventado; el mismo que pones en Meta al configurar el webhook
+#   ANTHROPIC_API_KEY       opcional: lee fotos de listas escritas a mano

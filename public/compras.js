@@ -43,6 +43,7 @@ const CATS = { materiales: "Materiales", equipos: "Equipos y transporte", indire
 const UNIDADES = ["u", "saco", "m3", "m2", "m", "ml", "kg", "qq", "lt", "gl", "rollo", "plancha", "varilla", "volqueta", "global"];
 
 let sb = null, user = null, perfil = null, obras = [], obraId = "";
+let wa = { cargado: false, usuarios: [], mensajes: [], estado: null, nuevo: null, porReq: {} }; // WhatsApp (solo administradores)
 let reqs = [], items = [], invit = [], profs = [], pitems = [], ocs = [], ocItems = [], ges = [], geItems = [], facts = [], provs = [], hist = [], sri = null, sinTablas = false, conGastos = true;
 let view = "lista", tab = "procesos", req = null, oc = null, prov = null, dirty = false, confirm = null;
 let pegar = false, aprob = null, pf = null, adj = null, rec = null, fac = null, provNuevo = null, volverA = "lista", fOC = "pend";
@@ -128,7 +129,7 @@ async function cargarGlobal() {
     const om = Object.fromEntries((os || []).filter((x) => x.estado !== "anulada" && x.estado !== "borrador").map((x) => [x.id, x]));
     hist = (is || []).filter((i) => om[i.orden_id]).map((i) => ({ ...i, fecha: om[i.orden_id].fecha, numero: om[i.orden_id].numero, ruc: om[i.orden_id].proveedor_ruc }));
     // facturas que llegaron por correo (si está instalado el lector de facturas)
-    sri = await q(() => sb.from("facturas_proveedor").select("clave_acceso,ruc_emisor,razon_social,numero,fecha_emision,subtotal,iva,total,obra_id,estado").eq("estado", "procesada").order("fecha_emision", { ascending: false }));
+    sri = await q(() => sb.from("facturas_proveedor").select("clave_acceso,ruc_emisor,razon_social,numero,fecha_emision,subtotal,iva,total,obra_id,estado,gasto_id,categoria").eq("estado", "procesada").order("fecha_emision", { ascending: false }));
   }
 }
 
@@ -160,14 +161,14 @@ function renderBase() {
   renderLista(m);
 }
 function renderLista(m) {
-  const tabs = [["procesos", "Procesos (" + reqs.length + ")"], ["ordenes", "Órdenes (" + ocs.length + ")"]].concat(esAdmin() ? [["proveedores", "Proveedores"]] : []);
+  const tabs = [["procesos", "Procesos (" + reqs.length + ")"], ["ordenes", "Órdenes (" + ocs.length + ")"]].concat(esAdmin() ? [["proveedores", "Proveedores"], ["whatsapp", "WhatsApp"]] : []);
   m.innerHTML = `<div class="segtabs" style="grid-template-columns:repeat(${tabs.length},1fr)" role="tablist">${tabs.map(([k, v]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}">${v}</button>`).join("")}</div>
-  ${tab === "ordenes" ? htmlOrdenes() : tab === "proveedores" ? htmlProveedores() : htmlProcesos()}`;
+  ${tab === "ordenes" ? htmlOrdenes() : tab === "proveedores" ? htmlProveedores() : tab === "whatsapp" ? htmlWhatsapp() : htmlProcesos()}`;
 }
 function tarjetaReq(r) {
   const et = etapaReq(r), its = itemsDe(r.id), os = ocsDe(r.id).filter((o) => o.estado !== "anulada");
   return `<button class="rep rq" type="button" data-req="${esc(r.id)}"><span class="tp ${r.tipo}">${r.tipo === "directo" ? "PD" : "SC"}</span>
-    <span style="min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(r.titulo)}${r.urgente ? ` <em class="urg">URGENTE</em>` : ""}</span>
+    <span style="min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(r.titulo)}${r.urgente ? ` <em class="urg">URGENTE</em>` : ""}${r.origen === "whatsapp" ? ` <em class="wa">WhatsApp</em>` : ""}</span>
       <span class="d">${esc([r.numero || "nuevo", fmtF(r.fecha), its.length + (its.length === 1 ? " ítem" : " ítems"), r.solicitado_por || r.creado_por, os.length ? os.map((o) => o.numero || "OC").join(", ") : ""].filter(Boolean).join(" · "))}</span></span>
     <span class="pill et-${et}">${ETAPAS[et]}</span></button>`;
 }
@@ -239,6 +240,7 @@ function htmlAcciones(r, et) {
   if (r.tipo === "cotizacion" && esAdmin() && ["cotizacion", "comparativo"].includes(et)) h += htmlCotizacion(r);
   const os = ocsDe(r.id);
   if (os.length) h += `<details class="sec" data-sec="ocs" open><summary><span class="num">${os.length}</span><h2>Órdenes de pedido</h2><span class="sum"></span></summary><div class="body"><div class="list">${os.map(tarjetaOC).join("")}</div></div></details>`;
+  if (r.origen === "whatsapp" && esAdmin()) h += htmlMensajesReq(r);
   if (r.justificacion) h += `<span class="code">Justificación de la adjudicación: ${esc(r.justificacion)}</span>`;
   if (esAdmin() && !os.length && confirm !== "rech") h += confirm === "delR" ? `<div class="confirm"><span>¿Borrar ${esc(r.numero || "este proceso")}?</span><button class="btn sm danger" type="button" data-act="delROk">Sí, borrar</button><button class="btn sm" type="button" data-act="noConf">Cancelar</button></div>` : `<div><button class="btn sm ghost" type="button" data-act="delR">Borrar proceso</button></div>`;
   return h;
@@ -439,7 +441,7 @@ async function aprobar() {
   const o = await crearOC(r, a.proveedor_ruc, r.items.map((it) => ({ req_item_id: it.id, descripcion: it.descripcion, unidad: it.unidad, cantidad: it.cantidad, precio_unitario: num(a.precios[it.id]) })), { ...a, estado: "emitida" });
   if (!o) return;
   await setEtapa(r, "entrega", { proveedor_sugerido: a.proveedor_ruc, adjudicado_en: new Date().toISOString() });
-  aprob = null; render(); toast("Pedido aprobado · orden " + (o.numero || "") + " emitida");
+  aprob = null; render(); toast("Pedido aprobado · orden " + (o.numero || "") + " emitida"); avisar(r, "aprobado");
 }
 async function guardarProforma() {
   const r = req, p = pf;
@@ -523,11 +525,19 @@ async function guardarFactura() {
   // gasto en Control de costos (sin IVA)
   const r = reqs.find((x) => x.id === o.requerimiento_id) || {}, p = provDe(o.proveedor_ruc);
   const g = { obra_id: o.obra_id, fecha: data.fecha, categoria: o.categoria || "materiales", proveedor: p.razon_social, documento: data.numero, descripcion: [o.numero, r.titulo].filter(Boolean).join(" · "), capitulo: o.capitulo || null, monto: sub, pagado: false, origen: "compra", orden_id: o.id };
-  let { data: gs, error: e3 } = await sb.from("gastos").insert(g).select().single();
-  if (e3 && /orden_id/.test(e3.message || "")) { delete g.orden_id; ({ data: gs, error: e3 } = await sb.from("gastos").insert(g).select().single()); }
+  const delCorreo = data.clave_acceso && sri ? sri.find((x) => x.clave_acceso === data.clave_acceso) : null;
+  let gs = null, e3 = null;
+  if (delCorreo && delCorreo.gasto_id) {
+    // la factura ya se había asignado a la obra en Facturas SRI: se reutiliza ese gasto para no contarlo dos veces
+    ({ data: gs, error: e3 } = await sb.from("gastos").update({ obra_id: o.obra_id, categoria: g.categoria, capitulo: g.capitulo, descripcion: g.descripcion, orden_id: o.id, origen: "compra" }).eq("id", delCorreo.gasto_id).select().single());
+  }
+  if (!gs) {
+    ({ data: gs, error: e3 } = await sb.from("gastos").insert(g).select().single());
+    if (e3 && /orden_id/.test(e3.message || "")) { delete g.orden_id; ({ data: gs, error: e3 } = await sb.from("gastos").insert(g).select().single()); }
+  }
   if (gs) { await sb.from("compras_orden_facturas").update({ gasto_id: gs.id }).eq("id", data.id); data.gasto_id = gs.id; }
   else conGastos = false;
-  if (data.clave_acceso && sri && sri.some((x) => x.clave_acceso === data.clave_acceso)) await sb.from("facturas_proveedor").update({ obra_id: o.obra_id, asignada_por: (perfil && perfil.nombre) || user.email, asignada_en: new Date().toISOString() }).eq("clave_acceso", data.clave_acceso);
+  if (data.clave_acceso && sri && sri.some((x) => x.clave_acceso === data.clave_acceso)) await sb.from("facturas_proveedor").update({ obra_id: o.obra_id, gasto_id: gs ? gs.id : null, asignada_por: (perfil && perfil.nombre) || user.email, asignada_en: new Date().toISOString() }).eq("clave_acceso", data.clave_acceso);
   fac = null;
   const e = estadoOC(o); if (e === "facturada") await sb.from("compras_ordenes").update({ estado: "facturada" }).eq("id", o.id).then(({ data: d }) => d);
   const k = ocs.findIndex((x) => x.id === o.id); if (e === "facturada") { ocs[k] = { ...ocs[k], estado: "facturada" }; oc.estado = "facturada"; }
@@ -554,6 +564,75 @@ async function guardarProvNuevo() {
   provs.push(data); provs.sort((a, b) => a.razon_social.localeCompare(b.razon_social, "es"));
   if (n.para === "a_prov") aprob.proveedor_ruc = ruc; else if (n.para === "pf_prov") pf.proveedor_ruc = ruc; else if (n.para === "inv_prov") n.invitar = ruc;
   provNuevo = null; render(); const s = $("#" + n.para); if (s) s.value = ruc;
+}
+
+/* ---------- WhatsApp (servicio de integraciones) ---------- */
+async function tok() { const { data: { session } } = await sb.auth.getSession(); return session ? session.access_token : ""; }
+async function integra(ruta, opts = {}) {
+  const r = await fetch("/api/integra/" + ruta, { ...opts, headers: { Authorization: "Bearer " + (await tok()), ...(opts.headers || {}) } });
+  if (!(r.headers.get("Content-Type") || "").includes("json")) { if (!r.ok) throw new Error("El servicio respondió " + r.status); return r; }
+  const j = await r.json(); if (!r.ok) throw new Error(j.mensaje || j.error || "El servicio respondió " + r.status); return j;
+}
+const telLocal = (t) => String(t || "").replace(/^593/, "0");
+const telIntl = (t) => { const d = String(t || "").replace(/\D/g, ""); return d.startsWith("593") ? d : d.startsWith("0") ? "593" + d.slice(1) : d; };
+const RES_WA = { pedido_creado: ["Pedido creado", "ok"], pedido_ampliado: ["Agregado al pedido", "ok"], recepcion: ["Entrega registrada", "ok"], recepcion_parcial_pendiente: ["Parcial: registrar en la app", "aviso"], no_autorizado: ["Número no autorizado", "mal"], falta_obra: ["Faltó la obra", "aviso"], no_entendido: ["No entendido", "aviso"], estado: ["Consulta", ""], ayuda: ["Ayuda", ""], anular: ["Anulación", ""] };
+async function avisar(r, evento) {
+  if (!r || !r.solicitado_tel) return;
+  try { const res = await integra("whatsapp/notificar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ requerimiento_id: r.id, evento }) }); toast(res && res.ok ? "Aviso enviado por WhatsApp a " + (r.solicitado_por || "quien pidió") : "No se pudo avisar por WhatsApp" + (res && res.motivo === "ventana_24h" ? ": pasaron más de 24 h desde su último mensaje" : "")); }
+  catch (e) { /* el servicio aún no está conectado: no se avisa */ }
+}
+async function cargarWa() {
+  const [u, m] = await Promise.all([q(() => sb.from("whatsapp_usuarios").select("*").order("nombre")), q(() => sb.from("whatsapp_mensajes").select("*").order("created_at", { ascending: false }).limit(80))]);
+  wa.cargado = true; wa.sinTablas = u === null; wa.usuarios = u || []; wa.mensajes = m || [];
+  render();
+  integra("estado").then((e) => { wa.estado = e; render(); }).catch((e) => { wa.estado = { error: e.message }; render(); });
+}
+async function cargarMensajesReq(rid) {
+  wa.porReq[rid] = (await q(() => sb.from("whatsapp_mensajes").select("*").eq("requerimiento_id", rid).order("created_at"))) || [];
+  if (view === "req" && req && req.id === rid) render();
+}
+function filaMensaje(m) {
+  const [rt, rc] = RES_WA[m.resultado] || ["", ""], audio = /^audio\//.test(m.media_tipo || "");
+  return `<div class="wam ${m.direccion}"><div class="h"><b>${esc(m.direccion === "salida" ? "DLV → " + (m.nombre || telLocal(m.telefono)) : m.nombre || telLocal(m.telefono))}</b><span class="code">${esc(new Date(m.created_at).toLocaleString("es-EC", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }))}</span>${rt ? `<span class="pill ${rc ? "gp-" + rc : ""}">${rt}</span>` : ""}</div>
+    ${m.texto ? `<span class="tx">${esc(m.texto)}</span>` : ""}${m.transcripcion ? `<span class="tr">${audio ? "Escuché" : "En la foto"}: «${esc(m.transcripcion)}»</span>` : ""}
+    ${m.media_key ? `<div class="acts"><button class="btn sm" type="button" data-wamedia="${esc(m.media_key)}">${audio ? "Escuchar nota de voz" : "Ver foto"}</button>${m.direccion === "entrada" && !m.transcripcion ? `<button class="btn sm" type="button" data-waleer="${esc(m.wa_id)}">Leer con IA otra vez</button>` : ""}</div>` : ""}${m.error ? `<span class="warnline">${esc(m.error)}</span>` : ""}</div>`;
+}
+function htmlMensajesReq(r) {
+  if (!wa.porReq[r.id]) { cargarMensajesReq(r.id); return ""; }
+  const ms = wa.porReq[r.id];
+  return ms.length ? `<details class="sec" data-sec="wa" open><summary><span class="num">WA</span><h2>Mensajes de WhatsApp</h2><span class="sum">${esc(r.solicitado_por || "")} · ${esc(telLocal(r.solicitado_tel))}</span></summary><div class="body">${ms.map(filaMensaje).join("")}
+    ${etapaReq(r) === "pedido" && !r.items.length ? `<span class="code">Llegó como foto o nota de voz sin ítems legibles: escribe los ítems arriba y guarda.</span>` : ""}</div></details>` : "";
+}
+function htmlWhatsapp() {
+  if (!wa.cargado) { cargarWa(); return `<div class="empty">Cargando…</div>`; }
+  if (wa.sinTablas) return `<div class="empty"><b>Falta activar WhatsApp.</b><span>Ejecuta <b>supabase/integraciones.sql</b> (o <b>instalar_todo.sql</b>) en Supabase → SQL Editor y recarga.</span></div>`;
+  const e = wa.estado, n = wa.nuevo;
+  return `
+  <section class="obracard"><div class="listhead"><h2 class="h2">Pedidos por WhatsApp</h2></div>
+    ${!e ? `<span class="code">Revisando la conexión…</span>` : e.error || !e.whatsapp || !e.whatsapp.conectado ? `<div class="alertbar"><b>El número de pedidos todavía no está conectado.</b><span>Puedes dejar listos los números autorizados. Para conectar el número con la API de Meta, sigue la sección «Facturas por correo y WhatsApp» de la guía (LEEME).</span></div>`
+      : `<span class="code">Número de pedidos: <b>${esc(e.whatsapp.numero || "configurado")}</b> · notas de voz ${e.ia && e.ia.voz ? "se transcriben" : "sin transcripción"} · fotos de listas ${e.ia && e.ia.fotos ? "se leen con IA" : "quedan para transcribir a mano"}</span>`}
+    <span class="code">El residente escribe, por ejemplo: «Pedido Turi / 20 sacos cemento / 2 m3 arena / Urgente». Llega aquí como pedido de obra por aprobar. También puede mandar una nota de voz o la foto de una lista, consultar «estado» o confirmar «recibido OC-2026-0012» con la foto de la guía.</span>
+  </section>
+  <section class="obracard"><div class="listhead"><h2 class="h2">Números autorizados</h2><button class="btn sm hivis" type="button" data-act="waNuevo">+ Número</button></div>
+    ${n ? `<div class="pfbox"><div class="grid3"><label class="fld"><span>Celular</span><input id="waTel" type="tel" placeholder="099 123 4567" value="${esc(n.telefono)}"></label><label class="fld"><span>Nombre</span><input id="waNom" type="text" value="${esc(n.nombre)}"></label>
+      <label class="fld"><span>Rol</span><select id="waRol">${["residente", "bodega", "compras", "gerente"].map((r) => `<option${n.rol === r ? " selected" : ""}>${r}</option>`).join("")}</select></label></div>
+      <label class="fld"><span>Obra por defecto</span><select id="waObra"><option value="">Cualquiera (debe nombrarla en el mensaje)</option>${obras.map((o) => `<option value="${esc(o.id)}"${n.obra_id === o.id ? " selected" : ""}>${esc(o.nombre)}</option>`).join("")}</select></label>
+      <div class="acts"><button class="btn primary" type="button" data-act="waGuardar">Guardar</button><button class="btn ghost" type="button" data-act="waNo">Cancelar</button></div></div>` : ""}
+    <div class="mini">${wa.usuarios.map((u) => `<div><span>${esc(u.nombre)} · ${esc(telLocal(u.telefono))} · ${esc(u.rol)}${u.obra_id ? " · " + esc(obra(u.obra_id).nombre || "") : ""}${u.activo ? "" : " · inactivo"}</span><button class="lnk" type="button" data-waedit="${esc(u.telefono)}">Editar</button><button class="lnk" type="button" data-waact="${esc(u.telefono)}">${u.activo ? "Desactivar" : "Activar"}</button></div>`).join("") || `<span class="code">Solo los números de esta lista pueden pedir. A los demás se les responde que no están autorizados.</span>`}</div>
+  </section>
+  <section class="obracard"><div class="listhead"><h2 class="h2">Cómo se llama cada obra</h2></div>
+    <span class="code">Palabras con las que el equipo nombra la obra en los mensajes, separadas por coma (el nombre completo siempre funciona).</span>
+    <div class="alias">${obras.map((o) => `<label class="fld"><span>${esc(o.nombre)}</span><input type="text" data-alias="${esc(o.id)}" value="${esc((o.alias || []).join(", "))}" placeholder="turi, edificio turi"></label>`).join("")}</div>
+    <div><button class="btn sm" type="button" data-act="waAlias">Guardar nombres</button></div>
+  </section>
+  <section class="obracard"><div class="listhead"><h2 class="h2">Últimos mensajes</h2><button class="btn sm ghost" type="button" data-act="waRecargar">Actualizar</button></div>
+    <div class="wams">${wa.mensajes.map(filaMensaje).join("") || `<span class="code">Aún no llegan mensajes.</span>`}</div>
+  </section>`;
+}
+async function abrirMediaWa(key) {
+  const w = window.open("", "_blank");
+  try { const r = await integra("whatsapp/media?key=" + encodeURIComponent(key)); const u = URL.createObjectURL(await r.blob()); if (w) w.location = u; else location.href = u; setTimeout(() => URL.revokeObjectURL(u), 60000); }
+  catch (e) { if (w) w.close(); toast(e.message); }
 }
 
 /* ---------- PDF ---------- */
@@ -684,8 +763,33 @@ document.addEventListener("click", async (e) => {
   if (b.dataset.pf) { const p = profs.find((x) => x.id === b.dataset.pf); pf = { ...p, precios: Object.fromEntries(pitems.filter((x) => x.proforma_id === p.id).map((x) => [x.req_item_id, { precio: num(x.precio_unitario), marca: x.marca || "", cumple: x.cumple }])) }; render(); return; }
   if (b.dataset.todo && adj) { for (const it of req.items) { const x = pitems.find((y) => y.proforma_id === b.dataset.todo && y.req_item_id === it.id); if (x) adj.sel[it.id] = x.id; } render(); return; }
   if (b.dataset.delinv) { const { error } = await sb.from("compras_invitados").delete().eq("id", b.dataset.delinv); if (!error) invit = invit.filter((x) => x.id !== b.dataset.delinv); render(); return; }
+  if (b.dataset.wamedia) return abrirMediaWa(b.dataset.wamedia);
+  if (b.dataset.waleer) { b.disabled = true; try { const r = await integra("whatsapp/transcribir", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wa_id: b.dataset.waleer }) }); toast(r.ok ? (r.agregados ? r.agregados + " ítems agregados al pedido" : "Transcripción lista") : r.motivo === "ia_no_configurada" ? "La IA no está configurada en el servicio" : "No se pudo leer: escribe los ítems a mano"); wa.cargado = false; if (req) { delete wa.porReq[req.id]; await cargarObra(); if (view === "req") abrirReq(reqs.find((x) => x.id === req.id)); } else render(); } catch (err) { toast(err.message); b.disabled = false; } return; }
+  if (b.dataset.waedit) { const u = wa.usuarios.find((x) => x.telefono === b.dataset.waedit); wa.nuevo = { ...u, telefono: telLocal(u.telefono), _orig: u.telefono }; render(); return; }
+  if (b.dataset.waact) { const u = wa.usuarios.find((x) => x.telefono === b.dataset.waact); const { error } = await sb.from("whatsapp_usuarios").update({ activo: !u.activo }).eq("telefono", u.telefono); if (error) return toast("No se pudo cambiar."); u.activo = !u.activo; render(); return; }
   if (b.dataset.gepdf) { try { pdfGE(b.dataset.gepdf); } catch (err) { console.error(err); toast("No se pudo generar el PDF."); } return; }
   const a = b.dataset.act;
+  if (a === "waNuevo") { wa.nuevo = { telefono: "", nombre: "", rol: "residente", obra_id: obraId }; render(); return; }
+  if (a === "waNo") { wa.nuevo = null; render(); return; }
+  if (a === "waRecargar") { wa.cargado = false; render(); return; }
+  if (a === "waGuardar") {
+    const tel = telIntl($("#waTel").value), nom = ($("#waNom").value || "").trim();
+    if (!/^5939\d{8}$/.test(tel) && !/^\d{10,15}$/.test(tel)) return toast("Escribe el celular, p. ej. 099 123 4567.");
+    if (!nom) return toast("Escribe el nombre.");
+    const row = { telefono: tel, nombre: nom, rol: $("#waRol").value, obra_id: $("#waObra").value || null, activo: true };
+    const orig = wa.nuevo._orig;
+    const { error } = orig ? await sb.from("whatsapp_usuarios").update(row).eq("telefono", orig) : await sb.from("whatsapp_usuarios").insert(row);
+    if (error) return toast(/duplicate|unique/i.test(error.message) ? "Ese número ya está en la lista." : "No se pudo guardar: " + error.message);
+    wa.nuevo = null; wa.cargado = false; render(); toast(nom + " puede enviar pedidos"); return;
+  }
+  if (a === "waAlias") {
+    for (const el of document.querySelectorAll("[data-alias]")) {
+      const al = el.value.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean), o = obras.find((x) => x.id === el.dataset.alias);
+      if (JSON.stringify(al) === JSON.stringify(o.alias || [])) continue;
+      const { error } = await sb.from("obras").update({ alias: al }).eq("id", o.id); if (error) return toast("No se pudo guardar: " + error.message); o.alias = al;
+    }
+    toast("Nombres de obra guardados"); return;
+  }
   if (a === "nuevoPD") return abrirReq(null, "directo");
   if (a === "nuevoSC") return abrirReq(null, "cotizacion");
   if (a === "nuevoProv") { prov = { ruc: "", razon_social: "" }; view = "prov"; dirty = true; render(); return; }
@@ -701,9 +805,9 @@ document.addEventListener("click", async (e) => {
   if (a === "aprobar") { const pre = {}; let ruc = req.proveedor_sugerido || ""; for (const it of req.items) { const u = ultimoPrecio(it.descripcion, it.unidad); if (u) { pre[it.id] = num(u.precio_unitario); ruc = ruc || u.ruc; } } aprob = { proveedor_ruc: ruc, fecha_entrega: req.fecha_limite || masDias(2), forma_pago: "", iva_pct: 15, categoria: "materiales", capitulo: "", precios: pre }; render(); return; }
   if (a === "aprobNo") { aprob = null; provNuevo = null; render(); return; }
   if (a === "aprobOk") { b.disabled = true; try { await aprobar(); } finally { b.disabled = false; } return; }
-  if (a === "aCotizar") { const d = await setEtapa(req, "cotizacion", { tipo: "cotizacion" }); if (d) { render(); toast("Pasó a cotización: invita a los proveedores"); } return; }
+  if (a === "aCotizar") { const d = await setEtapa(req, "cotizacion", { tipo: "cotizacion" }); if (d) { render(); toast("Pasó a cotización: invita a los proveedores"); avisar(d, "cotizacion"); } return; }
   if (a === "rechazar") { confirm = "rech"; render(); return; }
-  if (a === "rechOk") { const mot = ($("#motivo").value || "").trim(); if (!mot) return toast("Escribe el motivo."); const d = await setEtapa(req, "rechazado", { motivo_rechazo: mot }); if (d) { confirm = null; render(); toast("Pedido rechazado"); } return; }
+  if (a === "rechOk") { const mot = ($("#motivo").value || "").trim(); if (!mot) return toast("Escribe el motivo."); const d = await setEtapa(req, "rechazado", { motivo_rechazo: mot }); if (d) { confirm = null; render(); toast("Pedido rechazado"); avisar(d, "rechazado"); } return; }
   if (a === "noConf") { confirm = null; render(); return; }
   if (a === "invitar") { const ruc = $("#inv_prov").value; if (!ruc || ruc === "__nuevo") return toast("Elige un proveedor."); if (invit.some((x) => x.requerimiento_id === req.id && x.proveedor_ruc === ruc)) return toast("Ya está invitado."); const { data, error } = await sb.from("compras_invitados").insert({ requerimiento_id: req.id, proveedor_ruc: ruc }).select().single(); if (error) return toast("No se pudo invitar: " + error.message); invit.push(data); render(); return; }
   if (a === "nuevaPf") { pf = { proveedor_ruc: "", fecha: hoy(), numero_proforma: "", validez_dias: 15, plazo_entrega_dias: "", forma_pago: "", transporte_incluido: true, iva_pct: 15, observaciones: "", precios: {} }; render(); return; }
