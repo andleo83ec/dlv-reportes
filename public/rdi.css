@@ -1,0 +1,26 @@
+/* RDI, actas y correspondencia: pestañas de cuatro, filas con código y semáforo, fotos en miniatura */
+.segtabs.four{grid-template-columns:repeat(4,1fr)}
+.segtabs.four button{padding:9px 4px;font-size:.82rem}
+.rep.doc{grid-template-columns:auto minmax(0,1fr) auto;align-items:center}
+.rep .n.sm{font-family:var(--mono);font-size:.78rem;min-width:0;color:var(--navy);white-space:nowrap}
+.rep .mid{min-width:0;display:flex;flex-direction:column;gap:2px}
+.rep .mid .d{font-family:var(--body);font-size:.8rem}
+.rep.doc .pill{white-space:nowrap}
+@media (max-width:480px){.rep.doc{grid-template-columns:minmax(0,1fr)}.rep.doc .n.sm{order:-1}.rep.doc .pill{justify-self:start}}
+.urg{color:var(--bad)}
+.kpis b.rojo{color:var(--bad)}
+.acu{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);flex-wrap:wrap}
+.acu .chk{border:0;background:transparent;padding:0;align-items:flex-start;flex:1 1 220px}
+.acu .chk span{display:flex;flex-direction:column;gap:2px}
+.acu .d{font-size:.8rem;color:var(--muted)}
+.pastebox .d{font-size:.84rem}
+.r-asis{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) auto}
+@media (max-width:480px){.r-asis{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.r-asis .fld:first-child{grid-column:1/3}}
+.r-acu{grid-template-columns:minmax(0,1fr) auto}
+.r-acu .ext{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:6px}
+@media (max-width:480px){.r-acu .ext{grid-template-columns:repeat(2,minmax(0,1fr))}.r-acu .ext .fld:first-child{grid-column:1/-1}}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;background:var(--field);flex:none}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .rm{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:99px;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px;line-height:1}
+.addph{width:76px;height:76px;border-radius:8px;border:1.5px dashed var(--muted);background:transparent;display:grid;place-items:center;font-size:.8rem;color:var(--muted)}

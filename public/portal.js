@@ -37,7 +37,7 @@ const BASE = [
 ];
 
 let sb = null, user = null, perfil = null;
-let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [];
+let programas = [], sinTabla = false, editando = false, obrasHoy = null, filtro = "", garPorVencer = [], rdiVencidos = [], acuVencidos = [];
 const esAdmin = () => perfil && perfil.rol === "admin";
 
 /* ---------- datos ---------- */
@@ -57,6 +57,15 @@ async function cargarHoy() {
   const limite = lim.getFullYear() + "-" + String(lim.getMonth() + 1).padStart(2, "0") + "-" + String(lim.getDate()).padStart(2, "0");
   const g = await sb.from("garantias").select("id,obra_id,tipo,monto,vencimiento").eq("estado", "vigente").lte("vencimiento", limite).order("vencimiento");
   garPorVencer = g.error ? [] : (g.data || []);
+  // RDI sin respuesta y acuerdos de actas con el plazo vencido (si el módulo está activado)
+  const ay = new Date(); ay.setDate(ay.getDate() - 1);
+  const ayer = ay.getFullYear() + "-" + String(ay.getMonth() + 1).padStart(2, "0") + "-" + String(ay.getDate()).padStart(2, "0");
+  const [rd, ac] = await Promise.all([
+    sb.from("rdis").select("id,obra_id,numero,plazo").eq("estado", "abierto").lte("plazo", ayer),
+    sb.from("actas").select("obra_id,acuerdos")
+  ]);
+  rdiVencidos = rd.error ? [] : (rd.data || []);
+  acuVencidos = ac.error ? [] : (ac.data || []).flatMap((x) => (x.acuerdos || []).filter((u) => u.estado !== "cumplido" && u.plazo && u.plazo <= ayer).map((u) => ({ ...u, obra_id: x.obra_id })));
 }
 
 /* ---------- render ---------- */
@@ -76,6 +85,7 @@ function render() {
     ${obrasHoy && obrasHoy.length ? `<div class="hoy"><span class="code">HOY · ${new Date().toLocaleDateString("es-EC", { weekday: "long", day: "numeric", month: "long" })}</span>
       <div class="hoy-row">${obrasHoy.map((o) => `<a class="obra-chip ${o.reporte ? "ok" : "pend"}" href="/reportes"><span class="d"></span>${esc(o.nombre)}<small>${o.reporte ? "Reporte listo" : "Sin reporte"}</small></a>`).join("")}</div>
       ${pend.length ? `<span class="hint">${pend.length === 1 ? "1 obra" : pend.length + " obras"} sin reporte de hoy.</span>` : `<span class="hint">Todas las obras tienen su reporte de hoy.</span>`}</div>` : ""}
+    ${rdiVencidos.length || acuVencidos.length ? `<a class="gar-alert" href="/rdi?obra=${encodeURIComponent((rdiVencidos[0] || acuVencidos[0]).obra_id)}&tab=${rdiVencidos.length ? "rdi" : "acuerdos"}"><b>Pendientes fuera de plazo</b><span>${[rdiVencidos.length ? rdiVencidos.length + (rdiVencidos.length === 1 ? " RDI sin respuesta" : " RDI sin respuesta") : "", acuVencidos.length ? acuVencidos.length + (acuVencidos.length === 1 ? " acuerdo de acta vencido" : " acuerdos de actas vencidos") : ""].filter(Boolean).join(" · ")}</span></a>` : ""}
     ${garPorVencer.length ? `<a class="gar-alert" href="/subcontratos?tab=garantias&obra=${encodeURIComponent(garPorVencer[0].obra_id)}"><b>${garPorVencer.length === 1 ? "1 garantía vence" : garPorVencer.length + " garantías vencen"} en los próximos 30 días o ya vencieron</b><span>${garPorVencer.slice(0, 3).map((g) => { const ob = (obrasHoy || []).find((o) => o.id === g.obra_id); return esc((ob ? ob.nombre + " · " : "") + g.vencimiento.split("-").reverse().join("/")); }).join(" · ")}</span></a>` : ""}
   </section>
   <div class="tools-row">

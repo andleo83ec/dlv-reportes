@@ -9,6 +9,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/visor` | Visor 3D y avance (modelo IFC) |
 | `/planillas` | Estado de pago: presupuesto por obra y planillas al mandante con PDF |
 | `/subcontratos` | Subcontratos y garantías: contratos, planillas de subcontratistas, pólizas y evaluación |
+| `/rdi` | RDI, actas de reunión con seguimiento de acuerdos y registro de correspondencia |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
@@ -18,6 +19,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/portal.sql` | Menú de programas del portal | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/planillas.sql` | Presupuesto (rubros) y planillas del estado de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/subcontratos.sql` | Subcontratos, sus planillas y garantías | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/rdi.sql` | RDI, actas y correspondencia | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -74,3 +76,13 @@ Los cambios del menú se ven al instante para todos, sin publicar código. Los p
 5. **Evaluación al cierre:** calidad, plazos, seguridad, orden y documentación (1 a 5) y si se le volvería a contratar.
 
 Los montos se escriben como en Ecuador: `3.096` es tres mil noventa y seis y `1,75` es uno coma setenta y cinco.
+
+## RDI, actas y correspondencia (`/rdi`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/rdi.sql` (activa también el programa en el menú).
+2. **RDI:** asunto, a quién va dirigido, referencia (plano o eje), consulta, propuesta de DLV, hasta 4 fotos y fecha límite de respuesta. Semáforo: abierto, por vencer, vencido, respondido. Al registrar la respuesta se marca el impacto en costo o plazo. PDF con espacio para la respuesta y firmas.
+3. **Actas:** asistentes (se pueden copiar de la última acta), temas tratados y acuerdos con responsable, plazo y estado. El acta muestra los pendientes de actas anteriores. PDF con columna de firma para cada asistente.
+4. **Acuerdos:** todos los acuerdos sin cumplir de la obra, ordenados por plazo; se marcan cumplidos con un toque.
+5. **Oficios:** registro de correspondencia enviada (OF-001…) y recibida (REC-001…), con plazo cuando espera respuesta y dónde está el original.
+
+El portal avisa cuando hay RDI sin respuesta o acuerdos de actas fuera de plazo.
