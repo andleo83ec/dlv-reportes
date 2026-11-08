@@ -14,6 +14,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/ciclo` | Inicio y cierre de obra: listas de arranque y cierre, recepción, balance final y encuesta al cliente |
 | `/costos` | Control de costos por obra: gastos reales, presupuesto meta, margen a la fecha y proyectado, caja |
 | `/personal` | Personal: trabajadores, asistencia diaria, avisos de entrada al IESS y roles de pago |
+| `/documentos` | Control de documentos: listado maestro, versiones con archivo, revisiones y acuse de lectura |
 | `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
@@ -30,6 +31,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/ciclo.sql` | Inicio y cierre de obra | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/costos.sql` | Control de costos por obra | Se pega una vez en Supabase → SQL Editor, después de `planillas.sql` |
 | `supabase/personal.sql` | Personal y roles de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/documentos.sql` | Control de documentos | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -147,3 +149,11 @@ Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (s
 4. **Roles de pago** por quincena, semana o mes: días y horas extra salen de la asistencia; se agregan bonos, anticipos y descuentos. Calcula aporte personal (9,45 %), patronal (12,15 % = 11,15 % + IECE + SECAP), horas extra con 50 % de recargo y provisiones (décimos, vacaciones y fondos de reserva desde el año). Valores 2026: salario básico USD 482. Los parámetros se pueden cambiar en cada rol.
 5. El residente prepara el rol en borrador; el administrador lo aprueba y lo marca como pagado. **PDF** con columna de firma por trabajador.
 6. Integraciones: el costo de los roles aprobados pasa a mano de obra en Control de costos y en el tablero; el reporte diario trae la asistencia del día por cargo y horas; el portal avisa de trabajadores sin aviso de entrada al IESS.
+
+## Control de documentos (`/documentos`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/documentos.sql` (activa también el programa en el menú). Los archivos se guardan en el mismo bucket R2 (`functions/api/documentos.js`): todos los usuarios con sesión los leen; solo el administrador los sube.
+2. **Listado maestro** agrupado por tipo (manuales, políticas, procedimientos, instructivos, formatos y registros, documentos externos), con filtros y PDF del listado. Código tipo-área-número (PR-OBR-02, FO-ADM-03…); el programa sugiere el siguiente código libre.
+3. Con el listado vacío, el administrador puede **cargar un listado sugerido** con los procesos que ya cubre la plataforma; quedan "en elaboración" para asignar responsable y publicar.
+4. **Publicar versión:** número, fecha, qué cambió, elaboró, revisó, aprobó y el archivo. La nueva pasa a vigente y la anterior queda obsoleta en el historial. Cada documento tiene su revisión periódica (12 meses por defecto) con aviso de vencimiento.
+5. **Acuse de lectura:** cada persona confirma que leyó la versión vigente; el portal avisa de los documentos nuevos o actualizados en los últimos 30 días que el usuario aún no leyó.

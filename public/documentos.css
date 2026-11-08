@@ -1,0 +1,31 @@
+/* Control de documentos: listado maestro agrupado por tipo, ficha con versión vigente, historial y lecturas */
+.wrap{max-width:960px}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.h2{font-family:var(--display);font-size:1.2rem;text-transform:uppercase;letter-spacing:.04em;color:var(--navy)}
+.alertbar.mal{border-color:var(--bad);background:var(--bad-bg)}
+.kpis b.rojo,b.rojo{color:var(--bad)}
+.filtros{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}
+.filtros .chk{white-space:nowrap}
+@media (max-width:640px){.filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.filtros .fld:first-child{grid-column:1/-1}}
+.capt .code{font-size:.72rem;margin-left:6px;letter-spacing:0}
+.rep.doc{grid-template-columns:86px minmax(0,1fr) auto;align-items:start}
+.rep.doc .cod{font-family:var(--mono);font-weight:500;font-size:.8rem;color:var(--navy);padding-top:2px;overflow-wrap:anywhere}
+.rep.doc .d.mal{color:var(--bad)}
+.rep.doc .d.aviso{color:var(--warn)}
+@media (max-width:480px){.rep.doc{grid-template-columns:minmax(0,1fr) auto}.rep.doc .cod{grid-column:1/-1}}
+.pill.de-vigente{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pill.de-elaboracion{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.de-obsoleto{text-decoration:line-through}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.grid3{grid-template-columns:1fr}}
+.lnk{border:0;background:none;padding:0;color:var(--navy);font:inherit;font-size:.8rem;text-decoration:underline;cursor:pointer;text-align:left;overflow-wrap:anywhere}
+.vig .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;font-size:.88rem}
+.vig .kv span{color:var(--muted)}
+.vig .kv b{font-family:var(--mono);font-weight:500}
+.okline{font-size:.86rem;color:var(--ok);font-weight:600}
+.hist{display:flex;flex-direction:column;gap:8px}
+.hv{display:flex;flex-direction:column;gap:3px;border-left:3px solid var(--ok);padding:2px 0 2px 10px;font-size:.88rem}
+.hv.obs{border-left-color:var(--line);color:var(--muted)}
+.hv .h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mini{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
+.mini div{display:flex;gap:10px;justify-content:space-between;border-top:1px solid var(--line);padding-top:4px}
