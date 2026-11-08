@@ -59,11 +59,11 @@
 .rep.gs .fe small{font-family:var(--mono);font-size:.64rem;color:var(--muted)}
 .rep.gs .d{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rep.gs .mt{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
-.pill.cat-materiales{background:#e6eef8;color:#1d3557;border-color:transparent}
+.pill.cat-materiales{background:#ecebe7;color:#3a3d40;border-color:transparent}
 .pill.cat-mano_obra{background:var(--ok-bg);color:var(--ok);border-color:transparent}
 .pill.cat-equipos{background:var(--warn-bg);color:var(--warn);border-color:transparent}
 .pill.cat-indirectos{background:var(--field)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill.cat-materiales{background:#1c2a3d;color:var(--navy)}}
-:root[data-theme="dark"] .pill.cat-materiales{background:#1c2a3d;color:var(--navy)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill.cat-materiales{background:#2a2b2d;color:var(--navy)}}
+:root[data-theme="dark"] .pill.cat-materiales{background:#2a2b2d;color:var(--navy)}
 .metas{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .metas input{font-family:var(--mono);text-align:right}

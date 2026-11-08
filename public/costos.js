@@ -369,7 +369,7 @@ function csv() {
 function pdf() {
   const k = calc(), o = obra(), meses = porMes();
   const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }); { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[−–]/g, "-").replace(/✓/g, "»").replace(/☐/g, "[  ]").replace(/[★☆]/g, "*").replace(/↗/g, ">").replace(/↙/g, "<").replace(/→/g, "->") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
-  const M = 12, W = 186, NAVY = [29, 53, 87], AMB = [232, 163, 23], GRID = [150, 150, 150], SUB = [217, 222, 230], ROJO = [176, 42, 42], VERDE = [32, 120, 70];
+  const M = 12, W = 186, NAVY = [58, 61, 64], AMB = [169, 165, 157], GRID = [150, 150, 150], SUB = [232, 231, 227], ROJO = [160, 70, 62], VERDE = [60, 110, 78];
   const fit = (x, w) => { x = String(x ?? ""); while (x && doc.getTextWidth(x) > w) x = x.slice(0, -2) + "…"; return x; };
   let pagina = 1, y;
   const header = (sub) => {

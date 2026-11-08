@@ -559,7 +559,7 @@ async function guardarProvNuevo() {
 /* ---------- PDF ---------- */
 function pdfBase(orient, titulo, sub, meta) {
   const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: orient }); { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[−–]/g, "-").replace(/✓/g, "»").replace(/→/g, "->") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
-  const L = orient === "landscape", M = L ? 10 : 12, W = L ? 277 : 186, H = L ? 210 : 297, NAVY = [29, 53, 87], AMB = [232, 163, 23], GRID = [150, 150, 150], SUB = [217, 222, 230], LBL = [236, 235, 227];
+  const L = orient === "landscape", M = L ? 10 : 12, W = L ? 277 : 186, H = L ? 210 : 297, NAVY = [58, 61, 64], AMB = [169, 165, 157], GRID = [150, 150, 150], SUB = [232, 231, 227], LBL = [243, 242, 239];
   const fit = (x, w) => { x = String(x ?? ""); while (x && doc.getTextWidth(x) > w) x = x.slice(0, -2) + "…"; return x; };
   const P = { doc, M, W, H, NAVY, SUB, LBL, GRID, fit, pagina: 1, y: 0 };
   P.header = () => {
@@ -612,7 +612,7 @@ function pdfComparativo() {
   const wItem = 277 - ps.length * 34 - 26, cols = [["ÍTEM", wItem, "l"], ["CANT.", 26, "r"]].concat(ps.map((p) => [P.fit(provDe(p.proveedor_ruc).razon_social.toUpperCase(), 32), 34, "r"]));
   const sel = adj ? adj.sel : {};
   P.tabla(cols, filas.map((f) => ({ vals: [f.it.descripcion, qty(num(f.it.cantidad)) + " " + f.it.unidad].concat(f.celdas.map((c) => c ? pu4(c.pu) + (sel[f.it.id] === c.x.id ? "  «" : "") + (c.x.cumple === false ? " (NC)" : "") : "—")),
-    color: Object.fromEntries(f.celdas.map((c, i) => [i + 2, c && c.pu === f.min && c.x.cumple !== false ? [32, 120, 70] : [30, 30, 30]])) }))
+    color: Object.fromEntries(f.celdas.map((c, i) => [i + 2, c && c.pu === f.min && c.x.cumple !== false ? [60, 110, 78] : [30, 30, 30]])) }))
     .concat([{ vals: ["SUBTOTAL SIN IVA", ""].concat(ps.map((p) => money(totalProf(p, r).subtotal))), bold: true }, { vals: ["TOTAL CON IVA", ""].concat(ps.map((p) => money(totalProf(p, r).total))), bold: true, fill: P.SUB },
       { vals: ["PLAZO DE ENTREGA", ""].concat(ps.map((p) => p.plazo_entrega_dias ? p.plazo_entrega_dias + " días" : "—")) }, { vals: ["FORMA DE PAGO", ""].concat(ps.map((p) => p.forma_pago || "—")) }, { vals: ["TRANSPORTE", ""].concat(ps.map((p) => p.transporte_incluido ? "Incluido" : "No incluido")) }]), { size: 6.4 });
   P.texto("En verde el menor precio por ítem entre las ofertas que cumplen; « = adjudicado; NC = no cumple especificación." + ((adj && adj.just) || r.justificacion ? " Justificación: " + ((adj && adj.just) || r.justificacion) : ""));
@@ -625,7 +625,7 @@ function pdfGE(gid) {
   P.datos([["ORDEN", o.numero], ["PROVEEDOR", p.razon_social], ["GUÍA REMISIÓN", g.guia_remision], ["TRANSPORTISTA", [g.transportista, g.placa].filter(Boolean).join(" · ")], ["RECIBIDO POR", g.recibido_por], ["OBRA", ob.nombre]]);
   if (g.guia_clave) P.texto("Clave de acceso de la guía: " + g.guia_clave);
   P.tabla([["DESCRIPCIÓN", 92, "l"], ["UND", 14, "c"], ["PEDIDO", 20, "r"], ["RECIBIDO", 20, "r"], ["RECHAZADO", 20, "r"], ["NOTA", 20, "l"]],
-    gi.map((x) => { const i = ocItems.find((y) => y.id === x.orden_item_id) || {}; return { vals: [i.descripcion, i.unidad, qty(num(i.cantidad)), qty(num(x.cantidad_recibida)), num(x.cantidad_rechazada) ? qty(num(x.cantidad_rechazada)) : "", x.nota || ""], color: { 4: [176, 42, 42] } }; }));
+    gi.map((x) => { const i = ocItems.find((y) => y.id === x.orden_item_id) || {}; return { vals: [i.descripcion, i.unidad, qty(num(i.cantidad)), qty(num(x.cantidad_recibida)), num(x.cantidad_rechazada) ? qty(num(x.cantidad_rechazada)) : "", x.nota || ""], color: { 4: [160, 70, 62] } }; }));
   P.texto(g.observaciones ? "Observaciones: " + g.observaciones : "");
   P.firmas([["RECIBE · DLV", g.recibido_por], ["ENTREGA · TRANSPORTISTA", g.transportista || ""]]);
   P.guardar((g.numero || "Recepcion") + " " + (o.numero || "") + ".pdf");

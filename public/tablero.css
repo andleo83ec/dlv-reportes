@@ -1,7 +1,7 @@
 /* Tablero gerencial: tarjetas por obra con semáforo y tres barras (tiempo, físico, económico); detalle con curva de avance */
 .wrap{max-width:1080px}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
-.tcard{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:10px;padding:12px 14px;font:inherit;color:inherit;width:100%}
+.tcard{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:4px;padding:12px 14px;font:inherit;color:inherit;width:100%}
 .tcard:hover{border-color:var(--navy)}
 .tcard.s-aviso,.obracard.s-aviso{border-left:5px solid var(--hivis)}
 .tcard.s-mal,.obracard.s-mal{border-left:5px solid var(--bad)}
@@ -25,7 +25,7 @@
 .mot{margin:0;padding-left:18px;font-size:.82rem;color:var(--ink);display:flex;flex-direction:column;gap:2px}
 .mot.big{font-size:.9rem}
 .kpis b.rojo,.kv2 b.rojo{color:var(--bad)}
-.tbox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tbox{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .tbh{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .tbh h3{font-family:var(--display);font-size:1.2rem;text-transform:uppercase;letter-spacing:.04em;color:var(--navy)}
 .tcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}

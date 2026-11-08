@@ -245,7 +245,7 @@ async function confirmarLectura() {
 function pdf() {
   const lista = filtrados().slice().sort((a, b) => Object.keys(TIPOS).indexOf(a.tipo) - Object.keys(TIPOS).indexOf(b.tipo) || a.codigo.localeCompare(b.codigo));
   const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape" }); { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[−–]/g, "-").replace(/✓/g, "»").replace(/→/g, "->") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
-  const M = 10, W = 277, NAVY = [29, 53, 87], AMB = [232, 163, 23], GRID = [150, 150, 150], SUB = [217, 222, 230], ROJO = [176, 42, 42];
+  const M = 10, W = 277, NAVY = [58, 61, 64], AMB = [169, 165, 157], GRID = [150, 150, 150], SUB = [232, 231, 227], ROJO = [160, 70, 62];
   const fit = (x, w) => { x = String(x ?? ""); while (x && doc.getTextWidth(x) > w) x = x.slice(0, -2) + "…"; return x; };
   let pagina = 1;
   const header = () => {

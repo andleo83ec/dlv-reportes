@@ -333,7 +333,7 @@ function generarPDF() {
   if (!window.jspdf) return toast("No se cargó el generador de PDF. Revisa tu conexión y recarga.");
   const d = draft, o = obra(), { lineas, t } = calcular(d);
   const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape" }); { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[\u2212\u2013]/g, "-").replace(/\u2713/g, "»").replace(/\u2610/g, "[  ]").replace(/[\u2605\u2606]/g, "*").replace(/\u2197/g, ">").replace(/\u2199/g, "<").replace(/\u2192/g, "->") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
-  const M = 10, W = 277, NAVY = [29, 53, 87], AMB = [232, 163, 23], GRID = [150, 150, 150], LBL = [236, 235, 227], SUB = [217, 222, 230];
+  const M = 10, W = 277, NAVY = [58, 61, 64], AMB = [169, 165, 157], GRID = [150, 150, 150], LBL = [243, 242, 239], SUB = [232, 231, 227];
   const fit = (s, w) => { s = String(s ?? ""); while (s && doc.getTextWidth(s) > w) s = s.slice(0, -2) + "…"; return s; };
   let pagina = 1;
   function header(sub) {
@@ -426,7 +426,7 @@ function generarPDF() {
   for (const l of lineas) {
     const r = l.r;
     if ((r.capitulo || "") !== cap) { cap = r.capitulo || ""; if (cap) linea(["", cap.toUpperCase()], { bold: true, fill: LBL }); }
-    linea([r.codigo, r.descripcion + (r.adicional ? " (adicional)" : ""), r.unidad, qty(l.con), money(l.pu), money(l.vCon), qty(l.ant), l.per ? qty(l.per) : "", qty(l.acu), l.per ? money(l.vPer) : "", money(l.vAcu), pct(l.con > 0 ? l.acu / l.con * 100 : 0)], l.per ? { fill: [255, 247, 224] } : {});
+    linea([r.codigo, r.descripcion + (r.adicional ? " (adicional)" : ""), r.unidad, qty(l.con), money(l.pu), money(l.vCon), qty(l.ant), l.per ? qty(l.per) : "", qty(l.acu), l.per ? money(l.vPer) : "", money(l.vAcu), pct(l.con > 0 ? l.acu / l.con * 100 : 0)], l.per ? { fill: [246, 244, 238] } : {});
   }
   linea(["", "TOTALES", "", "", "", money(t.total), "", "", "", money(t.bruto), money(t.acumulado), pct(t.avance)], { bold: true, fill: SUB });
   const name = `EP-${String(d.numero).padStart(2, "0")} ${(o.nombre || "Obra").replace(/[\\/:*?"<>|]/g, "")} ${d.fecha}.pdf`;

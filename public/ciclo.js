@@ -193,7 +193,7 @@ function pdf() {
   if (dirty) return toast("Guarda antes de generar el PDF.");
   const o = obra(), doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
   { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[−–]/g, "-").replace(/✓/g, "»").replace(/[★☆]/g, "*") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
-  const M = 12, W = 186, NAVY = [29, 53, 87], AMB = [232, 163, 23], GRID = [150, 150, 150], LBL = [236, 235, 227], OKC = [223, 240, 223];
+  const M = 12, W = 186, NAVY = [58, 61, 64], AMB = [169, 165, 157], GRID = [150, 150, 150], LBL = [243, 242, 239], OKC = [232, 238, 233];
   const titulo = fase === "inicio" ? "PROTOCOLO DE INICIO DE OBRA" : "PROTOCOLO DE CIERRE DE OBRA";
   let y = 0, page = 1;
   const fit = (s, w) => { s = String(s ?? ""); while (s && doc.getTextWidth(s) > w) s = s.slice(0, -2) + "…"; return s; };

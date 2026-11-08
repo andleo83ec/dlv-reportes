@@ -23,7 +23,7 @@
 
   window.pdfDLV = function (o, d, fotosData, acumFn) {
     const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" }); { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[\u2212\u2013]/g, "-").replace(/\u2713/g, "»").replace(/\u2610/g, "[  ]").replace(/[\u2605\u2606]/g, "*").replace(/\u2197/g, ">").replace(/\u2199/g, "<").replace(/\u2192/g, "->") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
-    const M = 12, CW = 186, NAVY = [29, 53, 87], BAR = [74, 79, 87], LBL = [236, 235, 227], SUB = [217, 222, 230], GRID = [140, 140, 140], AMB = [232, 163, 23], OKC = [223, 240, 223];
+    const M = 12, CW = 186, NAVY = [58, 61, 64], BAR = [88, 91, 94], LBL = [243, 242, 239], SUB = [232, 231, 227], GRID = [140, 140, 140], AMB = [169, 165, 157], OKC = [232, 238, 233];
     const FS = 6.4, RH = 3.65;
     const fit = (t, w) => { t = String(t ?? ""); if (doc.getTextWidth(t) <= w) return t; while (t.length && doc.getTextWidth(t + "…") > w) t = t.slice(0, -1); return t + "…"; };
 
