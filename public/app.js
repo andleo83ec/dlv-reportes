@@ -116,7 +116,8 @@ async function urlsFotos(keys) {
 }
 async function pintarFotos() {
   const imgs = [...document.querySelectorAll("img[data-key]")]; if (!imgs.length) return;
-  try { await urlsFotos(imgs.map((i) => i.dataset.key)); imgs.forEach((i) => { if (urlCache[i.dataset.key]) i.src = urlCache[i.dataset.key]; }); } catch (_) {}
+  try { await urlsFotos(imgs.map((i) => i.dataset.key)); } catch (_) {}
+  imgs.forEach((i) => { if (urlCache[i.dataset.key]) i.src = urlCache[i.dataset.key]; else { i.alt = "Foto no disponible"; i.classList.add("nofoto"); } });
 }
 async function decodificar(file) {
   try { return await createImageBitmap(file, { imageOrientation: "from-image" }); } catch (_) {}
@@ -174,12 +175,16 @@ async function cargarBimDia() {
     : `<span class="code">Sin avances registrados en el visor para el ${fmtF(draft.fecha)}.</span>`;
   const btn = $("#bimBtn"); if (btn) btn.hidden = !rows.some((r) => !ya.has(r.id));
   pintarFotos();
+  // reporte nuevo: trae solo el avance del día (actividades, fotos y observados)
+  if (draft._autoBim && rows.some((r) => !ya.has(r.id))) traerBim();
 }
 function traerBim() {
+  delete draft._autoBim;
   const rows = bimCache[draft.obraId + "|" + draft.fecha] || [];
   draft.bim = draft.bim || [];
   let na = 0, nf = 0, sinCupo = 0;
   draft.actividades = draft.actividades.filter((a) => a.cod || a.desc || a.cant);
+  draft.novedades = (draft.novedades || []).filter(Boolean);
   for (const r of rows) {
     if (draft.bim.includes(r.id)) continue;
     draft.actividades.push({ cod: "", desc: (r.resumen || r.total + " elementos") + " — " + bimLabel(r), ubic: r.niveles || "", und: r.volumen ? "m³" : "", cant: r.volumen ? String(r.volumen) : "", bim: r.id });
@@ -194,6 +199,7 @@ function traerBim() {
     draft.bim.push(r.id);
   }
   if (!draft.actividades.length) draft.actividades = [{ cod: "", desc: "", ubic: "", und: "", cant: "" }];
+  if (!draft.novedades.length) draft.novedades = [""];
   setDirty(true); render();
   toast(`${na} actividades y ${nf} fotos pasadas al reporte` + (sinCupo ? ` (${sinCupo} fotos no entraron: máximo 6)` : ""));
 }
@@ -418,7 +424,7 @@ document.addEventListener("click", async (e) => {
   if (a === "borrarObra") { confirmDel = "obra"; render(); return; }
   if (a === "borrarObraOk") return archivarObra();
   if (a === "cancelDel") { confirmDel = null; render(); return; }
-  if (a === "nuevoRep") { const o = obraActual(); if (!o) return; draft = nuevoReporte(o); confirmDel = null; view = "editor"; setDirty(true); render(); window.scrollTo(0, 0); return; }
+  if (a === "nuevoRep") { const o = obraActual(); if (!o) return; draft = nuevoReporte(o); draft._autoBim = true; confirmDel = null; view = "editor"; setDirty(true); render(); window.scrollTo(0, 0); return; }
   if (a === "borrarRep") { confirmDel = "rep"; render(); return; }
   if (a === "bimTraer") return traerBim();
   if (a === "borrarRepOk") return borrarRep();
@@ -453,7 +459,7 @@ async function archivarObra() {
   obraId = ""; confirmDel = null; view = "lista"; toast("Obra archivada"); await cargarObras();
 }
 async function guardarRep() {
-  const d = clone(draft); d.numero = parseInt(d.numero, 10) || 1;
+  const d = clone(draft); delete d._autoBim; d.numero = parseInt(d.numero, 10) || 1;
   d.actividades = d.actividades.map((a) => ({ ...a, acum: r2(acumPrevio(a, draft) + num(a.cant)) }));
   const { id, obraId: oid, numero, fecha, turno, creadoPor, ...datos } = d;
   const row = { obra_id: oid, numero, fecha, turno, datos, actualizado: new Date().toISOString() };

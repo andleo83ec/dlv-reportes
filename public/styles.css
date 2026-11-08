@@ -169,3 +169,4 @@ html{background:var(--bg)}
 .bimst-ni{background:var(--field);color:var(--muted)}
 .bimth{display:flex;gap:6px;flex-wrap:wrap}
 .bimth img{width:64px;height:64px;object-fit:cover;border-radius:6px;background:var(--field)}
+img.nofoto{outline:1px dashed var(--bad);color:var(--bad);font-size:.7rem}
