@@ -332,7 +332,7 @@ async function borrarPlanilla() {
 function generarPDF() {
   if (!window.jspdf) return toast("No se cargó el generador de PDF. Revisa tu conexión y recarga.");
   const d = draft, o = obra(), { lineas, t } = calcular(d);
-  const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape" }); { const _t = doc.text.bind(doc), _l = (s) => typeof s === "string" ? s.replace(/[\u2212\u2013]/g, "-").replace(/\u2713/g, "»").replace(/\u2610/g, "[  ]").replace(/[\u2605\u2606]/g, "*").replace(/\u2197/g, ">").replace(/\u2199/g, "<").replace(/\u2192/g, "->") : s; doc.text = (s, ...a) => _t(Array.isArray(s) ? s.map(_l) : _l(s), ...a); }
   const M = 10, W = 277, NAVY = [29, 53, 87], AMB = [232, 163, 23], GRID = [150, 150, 150], LBL = [236, 235, 227], SUB = [217, 222, 230];
   const fit = (s, w) => { s = String(s ?? ""); while (s && doc.getTextWidth(s) > w) s = s.slice(0, -2) + "…"; return s; };
   let pagina = 1;

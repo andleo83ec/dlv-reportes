@@ -11,6 +11,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/subcontratos` | Subcontratos y garantías: contratos, planillas de subcontratistas, pólizas y evaluación |
 | `/rdi` | RDI, actas de reunión con seguimiento de acuerdos y registro de correspondencia |
 | `/tablero` | Tablero gerencial de todas las obras e informe semanal en PDF |
+| `/propuestas` | Estudio de propuestas: presupuesto de oferta, cotizaciones, efectividad comercial y adjudicación (solo admin) |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
@@ -22,6 +23,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/subcontratos.sql` | Subcontratos, sus planillas y garantías | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/rdi.sql` | RDI, actas y correspondencia | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/tablero.sql` | Activa el tablero en el menú (no crea tablas) | Se pega una vez en Supabase → SQL Editor |
+| `supabase/propuestas.sql` | Propuestas y cotizaciones (solo administradores) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -99,3 +101,15 @@ No tiene datos propios: lee los de los demás programas (si alguno no está acti
 - **Informe semanal en PDF:** elige la semana y arma el informe con avance físico y económico, personal y clima por día, actividades sumadas, avance en el modelo 3D, novedades y seguridad, pendientes, 4 fotos y firmas.
 
 Para que la curva y el semáforo sirvan, cada obra necesita su **inicio y plazo** (Editar obra) y el **% de avance físico acumulado** en cada reporte diario.
+
+## Estudio de propuestas (`/propuestas`, solo administradores)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/propuestas.sql` (activa también el programa en el menú, visible solo para administradores).
+2. **Propuesta:** proyecto, cliente, fecha límite de entrega (avisa 3 días antes) y plazo de obra.
+3. **Presupuesto de costos:** pega desde Excel Código · Descripción · Unidad · Cantidad · Costo unitario. Con indirectos y utilidad calcula el precio unitario de oferta (redondeado a centavos), el total sin IVA y con IVA.
+4. **Cotizaciones:** cada cotización va en un grupo (por ejemplo «Hormigón premezclado»); el comparativo marca la más baja y la diferencia de las demás, y se elige una por grupo.
+5. **PDF:** presupuesto referencial para el cliente y, en hoja aparte, el cuadro comparativo de uso interno.
+6. **Resultado:** presentada, adjudicada, perdida (con quién ganó y por cuánto) o desistida. La efectividad comercial del año se calcula en número y en monto.
+7. **Adjudicada:** «Crear la obra con este presupuesto» crea la obra y carga sus rubros a precio de oferta en Estado de pago, listos para planillar.
+
+Todos los PDF reemplazan los símbolos que la fuente del PDF no puede dibujar (signo menos, visto, casillas).
