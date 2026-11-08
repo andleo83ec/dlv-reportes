@@ -22,6 +22,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 |---|---|---|
 | `public/` | La app (pantallas, PDF, íconos) | Cloudflare Pages la publica |
 | `functions/api/` | Funciones del servidor (configuración, fotos y modelos IFC) | Cloudflare Pages las ejecuta |
+| `supabase/instalar_todo.sql` | **Todo junto, en orden** (base + todos los módulos) | Se pega una sola vez en Supabase → SQL Editor; se puede repetir sin perder datos |
 | `supabase/schema.sql` | Tablas, usuarios y permisos | Se pega una vez en Supabase → SQL Editor |
 | `supabase/portal.sql` | Menú de programas del portal | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/planillas.sql` | Presupuesto (rubros) y planillas del estado de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
