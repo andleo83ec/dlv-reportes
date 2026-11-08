@@ -32,6 +32,7 @@ const icono = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 // Menú base: se usa mientras la tabla "programas" no exista en Supabase
 const BASE = [
   { id: "b1", nombre: "Reporte diario de obra", descripcion: "Clima, personal, equipos, actividades, materiales y panel fotográfico. PDF de 2 hojas.", url: "/reportes", categoria: "Obra", icono: "reporte", estado: "activo", orden: 10 },
+  { id: "b3", nombre: "Estado de pago (planillas)", descripcion: "Presupuesto por obra, planillas al mandante con anterior, presente y acumulado, anticipo, garantía e IVA. PDF.", url: "/planillas", categoria: "Oficina técnica", icono: "presupuesto", estado: "beta", orden: 10 },
   { id: "b2", nombre: "Visor 3D y avance", descripcion: "Modelo IFC de ArchiCAD: registra el avance por elemento con fotos y pásalo al reporte diario.", url: "/visor", categoria: "Obra", icono: "cubo", estado: "beta", orden: 20 }
 ];
 

@@ -7,6 +7,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/` | Portal: menú de programas y estado de los reportes del día |
 | `/reportes` | Reporte diario de obra |
 | `/visor` | Visor 3D y avance (modelo IFC) |
+| `/planillas` | Estado de pago: presupuesto por obra y planillas al mandante con PDF |
 
 | Carpeta | Qué es | Dónde se usa |
 |---|---|---|
@@ -14,6 +15,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `functions/api/` | Funciones del servidor (configuración, fotos y modelos IFC) | Cloudflare Pages las ejecuta |
 | `supabase/schema.sql` | Tablas, usuarios y permisos | Se pega una vez en Supabase → SQL Editor |
 | `supabase/portal.sql` | Menú de programas del portal | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/planillas.sql` | Presupuesto (rubros) y planillas del estado de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Configuración en Cloudflare Pages
@@ -51,3 +53,12 @@ En el portal (`/`), un administrador toca **Administrar** y luego **Agregar prog
 - **Programa en desarrollo:** estado «En desarrollo» y sin dirección; aparece en el menú, atenuado y sin enlace.
 
 Los cambios del menú se ven al instante para todos, sin publicar código. Los programas marcados «Solo administradores» no aparecen a los residentes.
+
+## Estado de pago (`/planillas`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/planillas.sql` (una sola vez).
+2. **Presupuesto:** el admin copia desde Excel las columnas Código · Descripción · Unidad · Cantidad · Precio unitario y las pega. Las filas sin cantidad ni precio quedan como capítulos. Reconoce números con coma decimal (1.234,56) o punto decimal (1,234.56).
+3. **Obras adicionales:** se agregan como rubros marcados «Adicional»; suman aparte del contrato.
+4. **Planilla:** cantidad del período por rubro; calcula anterior, acumulado, % de avance, amortización del anticipo, fondo de garantía, multas, IVA y líquido a pagar. Avisa si un rubro supera la cantidad contratada.
+5. **Estados:** Borrador → Presentada → Aprobada → Pagada. Fuera de borrador las cantidades quedan bloqueadas. Solo el admin aprueba, marca pagada o borra.
+6. **PDF** A4 horizontal: carátula con resumen y firmas (DLV, fiscalización, mandante) y detalle por rubro.
