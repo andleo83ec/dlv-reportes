@@ -1,0 +1,44 @@
+# Publica la plataforma (y el servicio de integraciones) en Cloudflare sin conectar GitHub desde Cloudflare.
+# Necesita dos secretos en GitHub → Settings → Secrets and variables → Actions:
+#   CLOUDFLARE_API_TOKEN   (Cloudflare → My Profile → API Tokens → plantilla "Edit Cloudflare Workers")
+#   CLOUDFLARE_ACCOUNT_ID  (Cloudflare → Workers & Pages → Account ID, a la derecha)
+# Se ejecuta a mano desde la pestaña Actions → "Publicar en Cloudflare" → Run workflow,
+# y luego sola con cada cambio en main.
+name: Publicar en Cloudflare
+on:
+  workflow_dispatch:
+    inputs:
+      integraciones:
+        description: "¿Publicar también el servicio de facturas y WhatsApp?"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+
+jobs:
+  plataforma:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+  integraciones:
+    if: ${{ inputs.integraciones || vars.PUBLICAR_INTEGRACIONES == 'si' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+        working-directory: worker
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          command: deploy
