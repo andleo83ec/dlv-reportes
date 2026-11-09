@@ -40,7 +40,11 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/integraciones.sql` | Facturas por correo y pedidos por WhatsApp | Se pega una vez en Supabase → SQL Editor, después de `compras.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
-## Configuración en Cloudflare Pages
+## Instalar como Worker (recomendado)
+
+Cloudflare ahora crea los proyectos nuevos como Workers. El `wrangler.toml` de la raíz y `plataforma.js` publican la misma plataforma así: Workers & Pages → Create application → **Connect GitHub** → `dlv-reportes` (sin cambiar la carpeta raíz) → Deploy. El bucket `dlv-fotos` debe existir antes. Las variables de Supabase ya están en `wrangler.toml`.
+
+## Configuración en Cloudflare Pages (alternativa)
 
 - Build command: (vacío)
 - Build output directory: `public`

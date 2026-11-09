@@ -1,0 +1,26 @@
+# DLV Plataforma (pantallas + funciones) como Worker de Cloudflare.
+# Cloudflare → Workers & Pages → Create application → Connect GitHub → dlv-reportes (sin cambiar la carpeta raíz).
+# El servicio de facturas y WhatsApp es otro Worker, en la carpeta worker/ (tiene su propio wrangler.toml).
+name = "dlv-plataforma"
+main = "plataforma.js"
+compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# Fotos, modelos IFC, documentos (mismo bucket que usa el servicio de integraciones)
+[[r2_buckets]]
+binding = "FOTOS"
+bucket_name = "dlv-fotos"
+
+[vars]
+SUPABASE_URL = "https://upmwlplekapaigwbjqrt.supabase.co"
+# Clave pública "anon" (es pública por diseño; la seguridad la ponen las reglas RLS de Supabase)
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwbXdscGxla2FwYWlnd2JqcXJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5OTkwMjEsImV4cCI6MjEwOTU3NTAyMX0._zXNZVfg432HZEL7C9BvkpAu2KeMuQzR67D2POtREBc"
+
+# Parte C de la guía: cuando exista el Worker dlv-integraciones, quita los # de estas tres líneas
+# [[services]]
+# binding = "INTEGRACIONES"
+# service = "dlv-integraciones"
