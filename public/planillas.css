@@ -4,7 +4,7 @@
 .kpis div{display:flex;flex-direction:column;min-width:0}
 .kpis small{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .kpis b{font-family:var(--mono);font-size:1rem;font-variant-numeric:tabular-nums}
-.meter{height:8px;border-radius:3px;background:var(--field);border:1px solid var(--line);overflow:hidden}
+.meter{height:8px;border-radius:var(--rs);background:var(--field);border:1px solid var(--line);overflow:hidden}
 .meter i{display:block;height:100%;background:var(--ok)}
 .pill.est-borrador{background:var(--field)}
 .pill.est-presentada{background:var(--warn-bg);color:var(--warn);border-color:transparent}
@@ -14,13 +14,13 @@
 .cod{font-family:var(--mono);font-size:.74rem;color:var(--muted)}
 .nm{font-family:var(--mono);font-size:.78rem;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .nm.b,.pl .b{color:var(--ink);font-weight:500}
-.rubros{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:4px 12px 10px}
+.rubros{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:4px 12px 10px}
 .rub{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:4px 10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:.88rem}
 .rub .ds{min-width:0;overflow-wrap:anywhere}
 @media (max-width:560px){.rub{grid-template-columns:auto minmax(0,1fr) auto}.rub .nm{grid-column:2}.rub .nm.b{grid-column:2}.rub .x{grid-row:1;grid-column:3}}
 .adic .ds{font-style:italic}
-.prev{display:flex;flex-direction:column;gap:4px;font-size:.84rem;border:1px dashed var(--line);border-radius:3px;padding:8px}
-.sumcard{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:3;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.prev{display:flex;flex-direction:column;gap:4px;font-size:.84rem;border:1px dashed var(--line);border-radius:var(--rs);padding:8px}
+.sumcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;position:sticky;top:calc(6px + env(safe-area-inset-top,0px));z-index:3;box-shadow:0 4px 14px rgba(0,0,0,.06)}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:2px 18px}
 .sumgrid div{display:flex;justify-content:space-between;gap:10px;font-size:.86rem;padding:2px 0}
 .sumgrid b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -31,7 +31,7 @@
 .tools2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .tools2 .fld{flex:1 1 220px}
 .pls{display:flex;flex-direction:column;gap:6px}
-.pl{border:1px solid var(--line);border-radius:3px;padding:8px 10px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
+.pl{border:1px solid var(--line);border-radius:var(--rs);padding:8px 10px;background:var(--bg);display:flex;flex-direction:column;gap:6px}
 .pl.con{border-color:var(--hivis);background:var(--surface)}
 .pl.exc{border-color:var(--bad)}
 .pl .h{display:flex;gap:8px;align-items:baseline;font-size:.9rem;font-weight:500}

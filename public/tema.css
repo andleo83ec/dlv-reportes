@@ -1,0 +1,117 @@
+/* Tema de la plataforma: estilo CRM (barra lateral, tarjetas blancas redondeadas, negro para lo activo, Inter).
+   Se carga al final de cada página: ajusta tipografía y superficies sin tocar la lógica de cada programa. */
+
+body{font-size:15px;letter-spacing:-.005em}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;font-weight:600}
+
+/* Etiquetas y títulos sin mayúsculas sostenidas */
+.fld>span,.sub,.kv small,.plazo small,.kpis small,.tres small,.pl small,.capt,.clima th,.semana th,.tblw th,
+.hx span,.ctab .ch,.cat-h h2,.tbh h3,.h3n,.eyebrow,.brand-x{text-transform:none!important;letter-spacing:0!important;font-weight:500!important}
+.fld>span{font-size:.8rem;color:var(--muted)}
+.sub{font-size:.85rem;color:var(--ink);font-weight:600!important}
+.kv small,.plazo small,.kpis small,.tres small,.pl small{font-size:.75rem}
+.sec>summary h2,.h2,.grp>summary{text-transform:none!important;letter-spacing:-.01em!important;font-family:var(--display)!important;font-weight:600!important;font-size:1rem!important;color:var(--ink)!important}
+.grp>summary{border-bottom:1px solid var(--line)!important;font-size:.92rem!important}
+.listhead{border-bottom:0!important;padding-bottom:0!important}
+.listhead h1,.login h1{font-weight:700!important;font-size:1.6rem!important;letter-spacing:-.025em}
+.logo span{text-transform:none;letter-spacing:0;font-size:.85rem}
+
+/* Superficies */
+.sec,.obracard,.rep,.login,.fac,.asis,.rubros,.sumcard,.hoy,.tbox,.tcard,.banner,.empty{border-radius:var(--r)!important;box-shadow:var(--sh)}
+.sec>summary{padding:14px 16px}
+.body{padding:14px 16px 16px}
+.r,.chk,.bimrow,.asisdia,.foto,.acum{background:var(--soft)!important;border-color:transparent!important}
+.empty{border-style:solid;background:var(--surface)}
+.rep{padding:12px 16px;transition:background .12s,border-color .12s}
+.rep:hover{border-color:var(--line)!important;background:var(--soft)}
+.rep .n{font-weight:600!important;font-size:1.1rem!important;color:var(--ink)!important}
+
+/* Campos y botones */
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],input[type=tel],input[type=search],select,textarea{
+  background:var(--field);border:1px solid var(--line);border-radius:var(--rs);padding:9px 12px;transition:border-color .12s,box-shadow .12s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 8%,transparent)}
+.btn{border-radius:var(--rs);font-weight:500;letter-spacing:0;box-shadow:0 1px 1px rgba(24,24,27,.04);padding:8px 14px}
+.btn:hover{background:var(--soft)}
+.btn.primary:hover{background:var(--navy);opacity:.88}
+.btn.hivis{background:var(--soft);border-color:var(--line);color:var(--ink)}
+.btn.ghost{box-shadow:none}
+.pill{border-radius:99px!important;font-family:var(--body)!important;font-weight:500;letter-spacing:0;padding:2px 9px;background:var(--soft);border-color:transparent}
+.pill.ex{background:var(--ink);color:var(--surface)}
+.num{border-radius:6px;background:var(--soft);color:var(--ink);font-family:var(--body);font-weight:600}
+.urg{border-radius:99px!important}
+.toast{border-radius:var(--rs)!important;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.note,.confirm{border-radius:var(--rs)}
+
+/* Pestañas segmentadas: como el menú del CRM */
+.segtabs{background:var(--soft)!important;border:0!important;border-radius:12px!important;padding:4px!important;gap:4px!important}
+.segtabs button{border:0!important;border-radius:9px!important;background:transparent!important;color:var(--muted)!important;font-weight:500!important}
+.segtabs button[aria-selected="true"]{background:var(--surface)!important;color:var(--ink)!important;box-shadow:0 1px 3px rgba(24,24,27,.1)}
+.chipsel button{border-radius:99px}
+.chipsel button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+
+/* Tablas */
+table th{font-weight:500}
+.cmp th{background:var(--soft)!important;color:var(--muted)!important;font-weight:500!important}
+.cmp th .lnk{color:var(--ink)!important}
+
+/* Barra inferior */
+.dock{background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px)}
+
+/* ---------- Barra lateral (nav.js) ---------- */
+.side{position:fixed;z-index:20;top:12px;bottom:12px;left:12px;width:244px;display:flex;flex-direction:column;gap:6px;
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);padding:16px 12px 12px;overflow-y:auto;overscroll-behavior:contain}
+.side .sb-brand{display:flex;align-items:center;gap:10px;padding:2px 8px 12px}
+.side .sb-logo{width:34px;height:34px;border-radius:10px;background:var(--ink);color:var(--surface);display:grid;place-items:center;font-weight:700;font-size:.8rem;letter-spacing:.02em}
+.side .sb-name{display:flex;flex-direction:column;line-height:1.15}
+.side .sb-name b{font-size:1.02rem;font-weight:700;letter-spacing:-.02em}
+.side .sb-name small{font-size:.74rem;color:var(--muted)}
+.side .sb-grp{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.side .sb-h{font-size:.72rem;font-weight:500;color:var(--muted);padding:8px 10px 4px;letter-spacing:.02em}
+.side a.sb-it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:.9rem;font-weight:500}
+.side a.sb-it svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+.side a.sb-it:hover{background:var(--soft)}
+.side a.sb-it[aria-current="page"]{background:var(--ink);color:var(--surface);box-shadow:0 2px 6px rgba(24,24,27,.18)}
+.side a.sb-it[aria-current="page"] svg{opacity:1}
+.side .sb-foot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px 8px 2px;border-top:1px solid var(--line)}
+.side .sb-av{width:32px;height:32px;border-radius:99px;background:var(--soft);display:grid;place-items:center;font-weight:600;font-size:.8rem;flex:none}
+.side .sb-who{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
+.side .sb-who b{font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side .sb-who small{font-size:.74rem;color:var(--muted)}
+.side .sb-out{border:0;background:transparent;color:var(--muted);padding:6px;border-radius:8px}
+.side .sb-out:hover{background:var(--soft);color:var(--bad)}
+.side .sb-out svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sb-veil{position:fixed;inset:0;z-index:19;background:rgba(9,9,11,.35);backdrop-filter:blur(2px)}
+
+/* Escritorio: barra lateral fija, contenido a la derecha */
+@media (min-width:1024px){
+  body.con-side{padding-left:calc(244px + 40px)!important;padding-right:28px!important}
+  body.con-side .dock{left:268px}
+  body.con-side .top .logo b{display:none}
+  body.con-side .top .logo span{font-size:1.5rem;font-weight:700;letter-spacing:-.025em;color:var(--ink)}
+  body.con-side .top .user a.btn[href="/"]{display:none}
+  body.con-side .top{padding-top:22px}
+  .sb-veil{display:none}
+}
+/* Celular y tablet: la barra lateral se abre como cajón desde "Menú" */
+@media (max-width:1023.98px){
+  .side{transform:translateX(calc(-100% - 24px));transition:transform .2s ease}
+  body.side-open .side{transform:none}
+  .top .logo b{font-size:1.2rem!important;border:0!important;background:var(--ink);color:var(--surface)!important;border-radius:9px;padding:6px 8px;letter-spacing:.02em!important}
+}
+@media (prefers-reduced-motion:reduce){.side{transition:none}}
+
+/* Avisos más suaves */
+.gar-alert{border-color:color-mix(in srgb,var(--warn) 25%,transparent)!important;box-shadow:var(--sh)}
+.gar-alert:hover{border-color:var(--warn)!important}
+.wa{text-transform:none!important;letter-spacing:0!important;border-radius:99px!important;padding:0 6px!important}
+.urg{font-family:var(--body)!important;font-weight:600}
+/* Pestañas en celular: deslizables, sin cortar palabras */
+@media (max-width:620px){
+  .segtabs{display:flex!important;overflow-x:auto;scrollbar-width:none}
+  .segtabs::-webkit-scrollbar{display:none}
+  .segtabs button{flex:1 0 auto;white-space:nowrap;padding:8px 12px!important}
+}
+/* Botón de menú en celular */
+.top a.btn[href="/"].sb-menu{gap:8px}
+.top a.btn[href="/"].sb-menu svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+@media (max-width:1023.98px){body.con-side .top #quien{display:none}}

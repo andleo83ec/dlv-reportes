@@ -42,7 +42,7 @@
 .chart .bv,.leyenda i.bv{fill:var(--navy);background:var(--navy)}
 .chart .bc,.leyenda i.bc{fill:var(--hivis);background:var(--hivis)}
 .leyenda{display:flex;gap:14px;font-size:.78rem;color:var(--muted)}
-.leyenda i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.leyenda i{display:inline-block;width:12px;height:12px;border-radius:6px;margin-right:6px;vertical-align:-1px}
 .mini{display:flex;flex-direction:column;gap:4px;font-size:.84rem}
 .mini div{display:flex;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:4px}
 .mini span:first-child{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

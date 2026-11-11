@@ -1,8 +1,8 @@
 /* Subcontratos: cuadro de contratos con avance, pestañas Contratos/Garantías y semáforo de vencimientos */
-.segtabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--surface)}
+.segtabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .segtabs button{border:0;background:transparent;padding:10px;font-weight:600;font-size:.92rem;color:var(--muted)}
 .segtabs button[aria-selected="true"]{background:var(--navy);color:var(--on-navy)}
-.alertbar{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);border-radius:3px;padding:9px 12px;font-size:.86rem}
+.alertbar{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--warn);background:var(--warn-bg);color:var(--ink);border-radius:var(--rs);padding:9px 12px;font-size:.86rem}
 .alertbar span{color:var(--muted);font-size:.8rem}
 .rep.sc{align-items:start}
 .rep.sc .d{font-family:var(--body);font-size:.82rem}
@@ -25,10 +25,10 @@
 .r-it{grid-template-columns:minmax(0,.8fr) minmax(0,3fr) auto}
 .r-it .ext{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr);gap:6px}
 @media (max-width:480px){.r-it .ext{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.pastebox{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:3px;padding:10px;background:var(--bg)}
+.pastebox{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:var(--rs);padding:10px;background:var(--bg)}
 .pick{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow:auto}
 .pick .chk{align-items:flex-start;font-size:.85rem}
 .rate{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
 .stars{display:flex;gap:4px}
-.stars button{width:36px;height:36px;border-radius:3px;border:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-weight:500}
+.stars button{width:36px;height:36px;border-radius:var(--rs);border:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-weight:500}
 .stars button[aria-pressed="true"]{background:var(--hivis);border-color:var(--hivis);color:var(--hivis-ink)}

@@ -2,7 +2,7 @@
 .meter.big{height:10px}
 .h3n{font-family:var(--display);font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em;color:var(--navy);margin:0}
 .cks{display:flex;flex-direction:column;gap:6px}
-.ck{position:relative;border:1px solid var(--line);border-radius:3px;background:var(--bg);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.ck{position:relative;border:1px solid var(--line);border-radius:var(--rs);background:var(--bg);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .ck.hecho{border-color:var(--ok);background:var(--ok-bg)}
 .ck .chk{border:0;background:transparent;padding:0;align-items:flex-start;padding-right:26px}
 .ck .chk span{display:flex;flex-direction:column;gap:2px}

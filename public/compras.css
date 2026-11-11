@@ -13,9 +13,9 @@ b.rojo{color:var(--bad)}
 .grp>summary::-webkit-details-marker{display:none}
 .grp>summary .code{margin-left:6px;letter-spacing:0}
 .rep.rq{grid-template-columns:auto minmax(0,1fr) auto}
-.tp{font-family:var(--display);font-size:1.05rem;width:40px;height:40px;border-radius:3px;display:grid;place-items:center;background:var(--field);color:var(--navy);border:1px solid var(--line)}
+.tp{font-family:var(--display);font-size:1.05rem;width:40px;height:40px;border-radius:var(--rs);display:grid;place-items:center;background:var(--field);color:var(--navy);border:1px solid var(--line)}
 .tp.directo{background:var(--warn-bg);color:var(--warn);border-color:transparent}
-.urg{font-style:normal;font-size:.66rem;font-family:var(--mono);color:#fff;background:var(--bad);border-radius:4px;padding:1px 5px;vertical-align:middle}
+.urg{font-style:normal;font-size:.66rem;font-family:var(--mono);color:#fff;background:var(--bad);border-radius:var(--r);padding:1px 5px;vertical-align:middle}
 .ocn{font-family:var(--display);font-size:1.35rem;color:var(--navy);min-width:52px;display:flex;flex-direction:column;line-height:1}
 .ocn small{font-family:var(--mono);font-size:.6rem;color:var(--muted)}
 .ini{width:40px;height:40px;border-radius:99px;background:var(--navy);color:var(--on-navy);display:grid;place-items:center;font-family:var(--display);font-size:1.05rem;text-transform:uppercase}
@@ -45,7 +45,7 @@ b.rojo{color:var(--bad)}
 @media (max-width:560px){.r-pf{grid-template-columns:repeat(2,minmax(0,1fr))}.r-pf .ln1{grid-column:1/-1}.r-oc{grid-template-columns:repeat(3,minmax(0,1fr))}.r-oc .ln1{grid-column:1/-1}.r-oc .fld{width:auto}.r-pr2{grid-template-columns:minmax(0,1fr) auto}.r-pr2 .ln1{grid-column:1/-1}}
 .r input{font-family:inherit}
 [data-ap],[data-pp][data-k="precio"],[data-oi],[data-gq][data-k="rec"],[data-gq][data-k="rech"],[data-f="subtotal"],[data-f="iva"],[data-f="total"]{font-family:var(--mono)!important;text-align:right}
-.pfbox,.newprov{display:flex;flex-direction:column;gap:10px;border:1px solid var(--hivis);border-radius:4px;padding:12px;background:var(--surface)}
+.pfbox,.newprov{display:flex;flex-direction:column;gap:10px;border:1px solid var(--hivis);border-radius:var(--r);padding:12px;background:var(--surface)}
 .newprov{border-style:dashed;margin-top:6px}
 .copybox summary{cursor:pointer;font-size:.82rem;color:var(--navy)}
 .copybox textarea{width:100%;font-family:var(--mono);font-size:.76rem;margin-top:6px}
@@ -54,7 +54,7 @@ b.rojo{color:var(--bad)}
 .mini>div>span:first-child,.mini>div>.lnk:first-child{flex:1;min-width:0}
 .mini b{font-family:var(--mono);font-weight:500}
 /* comparativo */
-.cmpwrap{overflow-x:auto;border:1px solid var(--line);border-radius:3px}
+.cmpwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--rs)}
 table.cmp{border-collapse:collapse;width:100%;font-size:.8rem;min-width:520px}
 .cmp th{background:var(--navy);color:var(--on-navy);font-weight:600;padding:6px 8px;text-align:right;font-size:.74rem;vertical-align:top}
 .cmp th:first-child{text-align:left}
@@ -73,12 +73,12 @@ table.cmp{border-collapse:collapse;width:100%;font-size:.8rem;min-width:520px}
 .kv span{color:var(--muted)}
 .kv b{font-weight:500;overflow-wrap:anywhere}
 .tres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.tres div{background:var(--field);border:1px solid var(--line);border-radius:3px;padding:8px 10px;display:flex;flex-direction:column}
+.tres div{background:var(--field);border:1px solid var(--line);border-radius:var(--rs);padding:8px 10px;display:flex;flex-direction:column}
 .tres small{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .tres b{font-family:var(--mono);font-weight:500;font-size:.95rem}
 .meter.sm{height:5px}
 /* WhatsApp */
-.wa{font-style:normal;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:2px;padding:0 4px;vertical-align:middle}
+.wa{font-style:normal;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:6px;padding:0 4px;vertical-align:middle}
 .wams{display:flex;flex-direction:column;gap:8px}
 .wam{display:flex;flex-direction:column;gap:4px;border-left:2px solid var(--line);padding:4px 0 4px 10px;font-size:.86rem}
 .wam.entrada{border-left-color:var(--ok)}
