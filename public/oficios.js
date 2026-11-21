@@ -26,6 +26,15 @@ const esAdmin = () => perfil && perfil.rol === "admin";
 const obra = () => obras.find((o) => o.id === obraId) || {};
 const sigCodigo = () => { const o = obra(); if (!o.codigo) return "(la obra aún no tiene código)"; const n = oficios.reduce((m, x) => Math.max(m, x.numero || 0), 0) + 1; return `DLV-${o.codigo}-OF-${String(n).padStart(3, "0")}-${new Date().getFullYear()}`; };
 const urlVerif = (o) => `${location.origin}/v/${o.token_verificacion}`;
+// Vínculo con el visor 3D: el visor deja la selección en localStorage y abre /oficios?desde=visor
+const CLAVE_VISOR = "dlv-oficio-desde-visor";
+function leerVisor() {
+  let v = null; try { v = JSON.parse(localStorage.getItem(CLAVE_VISOR) || "null"); localStorage.removeItem(CLAVE_VISOR); } catch (_) {}
+  if (!v || v.obra !== obraId || !Array.isArray(v.guids) || !v.guids.length || Date.now() - (v.t || 0) > 3600e3) return null;
+  return v;
+}
+const textoElementos = (o) => [o.elementos_resumen, o.elementos_niveles].filter(Boolean).join(" · ");
+const urlVisor = (o) => `/visor?obra=${encodeURIComponent(o.obra_id || obraId)}&oficio=${encodeURIComponent(o.id)}`;
 
 /* ---------- datos ---------- */
 async function cargarObra() {
@@ -37,9 +46,10 @@ async function cargarObra() {
     ]);
     if (a.error) sinTablas = true; else { oficios = a.data || []; firmantes = b.data || []; }
   }
-  const id = new URLSearchParams(location.search).get("id");
+  const qs = new URLSearchParams(location.search), id = qs.get("id");
   const o = id && oficios.find((x) => x.id === id);
   if (o) { history.replaceState(null, "", location.pathname); return abrir(o); }
+  if (qs.get("desde") === "visor") { history.replaceState(null, "", location.pathname); return nuevo(leerVisor()); }
   render();
 }
 async function tok() { const { data: { session } } = await sb.auth.getSession(); return session ? session.access_token : ""; }
@@ -90,7 +100,7 @@ function renderLista(m) {
   </section>
   <div class="segtabs four" role="tablist">${FILTROS.map(([k, l]) => `<button type="button" role="tab" data-filtro="${k}" aria-selected="${filtro === k}">${l}</button>`).join("")}</div>
   <div class="list">${lista.map((o) => `<button class="rep doc of" type="button" data-of="${esc(o.id)}">
-      <span class="cod${o.codigo ? "" : " sin"}">${o.codigo ? esc(o.codigo) : "Borrador"}</span>
+      <span class="cod${o.codigo ? "" : " sin"}">${o.codigo ? esc(o.codigo) : "Borrador"}${(o.elementos || []).length ? '<span class="b3d" title="Vinculado al modelo 3D">3D</span>' : ""}</span>
       <span class="mid"><span class="t">${esc(o.asunto || "(sin asunto)")}</span>
         <span class="d">Para ${esc([o.destinatario_titulo, o.destinatario_nombre].filter(Boolean).join(" ") || "—")} · ${esc(o.autor_nombre || "")}${o.fecha_emision ? " · " + fmtF(o.fecha_emision) : ""}${o.estado === "pendiente_firma" ? " · firma " + esc(o.firmante_nombre || "") : ""}</span></span>
       <span class="pill of-${o.estado}">${EST[o.estado]}</span></button>`).join("")
@@ -109,6 +119,9 @@ function renderEditor(m) {
     <div class="sub">Contenido</div>
     ${inp("asunto", "Asunto")}
     ${inp("referencia", "Referencia (opcional: contrato, oficio anterior, planilla)")}
+    ${(x.elementos || []).length ? `<div class="bimlink"><span><b>Modelo 3D:</b> ${x.elementos.length === 1 ? "1 elemento" : x.elementos.length + " elementos"} · ${esc(textoElementos(x))}</span>
+      <span class="acts-row">${x.id ? `<a class="btn sm" href="${urlVisor(x)}">Ver en 3D</a>` : ""}<button class="btn sm" type="button" data-act="quitarBim">Quitar vínculo</button></span></div>`
+      : `<span class="code">Para referirse a columnas, vigas, losas u otros elementos, selecciónelos en el <a href="/visor?obra=${esc(obraId)}">visor 3D</a> y toque «Crear oficio».</span>`}
     <div class="claudebox"><b>Redactar con Claude</b>
       <label class="fld" for="idea"><span>Escriba en pocas palabras qué quiere decir</span><textarea id="idea" rows="3" placeholder="Ej.: pedir a fiscalización la aprobación del cambio de hormigón f'c 240 a 280 en columnas del 3er piso; respuesta en 3 días"></textarea></label>
       <div class="acts"><select id="tono"><option value="">Tono formal</option><option value="cordial">Cordial</option><option value="firme">Firme</option><option value="urgente">Urgente</option></select>
@@ -165,6 +178,7 @@ function renderDetalle(m) {
         <dt>Para</dt><dd>${esc([o.destinatario_titulo, o.destinatario_nombre].filter(Boolean).join(" "))}${o.destinatario_cargo ? "<br><small>" + esc(o.destinatario_cargo) + "</small>" : ""}${o.destinatario_institucion ? "<br><small>" + esc(o.destinatario_institucion) + "</small>" : ""}</dd>
         <dt>Asunto</dt><dd>${esc(o.asunto)}</dd>${o.referencia ? `<dt>Referencia</dt><dd>${esc(o.referencia)}</dd>` : ""}
         <dt>Emisión</dt><dd>${fmtF(o.fecha_emision)}</dd><dt>Redactó</dt><dd>${esc(o.autor_nombre)}</dd><dt>Firma</dt><dd>${esc(o.firmante_nombre)}</dd>
+        ${(o.elementos || []).length ? `<dt>Modelo 3D</dt><dd>${o.elementos.length === 1 ? "1 elemento" : o.elementos.length + " elementos"}<br><small>${esc(textoElementos(o))}</small></dd>` : ""}
         ${o.requiere_respuesta ? `<dt>Respuesta hasta</dt><dd>${fmtF(o.plazo_respuesta) || "—"}</dd>` : ""}
         ${o.firmado_en ? `<dt>Firmado</dt><dd>${esc(fmtFH(o.firmado_en))}</dd>` : ""}${o.certificado_info ? `<dt>Certificado</dt><dd>${esc(o.certificado_info)}</dd>` : ""}
         ${o.hash_sha256 ? `<dt>Huella SHA-256</dt><dd class="hash">${esc(o.hash_sha256)}</dd>` : ""}
@@ -173,6 +187,7 @@ function renderDetalle(m) {
         <button class="btn sm" type="button" data-act="copiar">Copiar enlace</button></div></div>
     <div class="acts-row">
       ${o.estado === "firmado" ? `<button class="btn primary" type="button" data-act="pdf">Ver PDF firmado</button><button class="btn" type="button" data-act="docx">Word</button>` : ""}
+      ${(o.elementos || []).length ? `<a class="btn" href="${urlVisor(o)}">Ver en el modelo 3D</a>` : ""}
       <a class="btn" href="/v/${esc(o.token_verificacion)}" target="_blank" rel="noopener">Página del QR</a>
       ${puedeAnular && confirmar !== "anular" ? `<button class="btn danger" type="button" data-act="anular">Anular</button>` : ""}
     </div>
@@ -219,10 +234,19 @@ function renderConfig(m) {
 }
 
 /* ---------- acciones ---------- */
-function nuevo() {
+function nuevo(v) {
   item = { obra_id: obraId, destinatario_titulo: "", destinatario_nombre: "", destinatario_cargo: "", destinatario_institucion: "", asunto: "", referencia: "", cuerpo: "",
-    anexos: "", con_copia: "", requiere_respuesta: false, plazo_respuesta: masDias(5), firmante_id: firmantes.length === 1 ? firmantes[0].id : "", estado: "borrador" };
-  view = "editor"; confirmar = ""; setDirty(false); render(); window.scrollTo(0, 0);
+    anexos: "", con_copia: "", requiere_respuesta: false, plazo_respuesta: masDias(5), firmante_id: firmantes.length === 1 ? firmantes[0].id : "", estado: "borrador",
+    elementos: [], elementos_resumen: "", elementos_niveles: "" };
+  let idea = "";
+  if (v) {
+    item.elementos = v.guids.slice(0, 5000); item.elementos_resumen = v.resumen || ""; item.elementos_niveles = v.niveles || "";
+    item.referencia = "Modelo IFC: " + textoElementos(item);
+    if (v.nombre) item.asunto = v.nombre;
+    idea = v.idea || "";
+  }
+  view = "editor"; confirmar = ""; setDirty(!!v); render(); window.scrollTo(0, 0);
+  if (idea) { $("#idea").value = idea; toast("Elementos del modelo 3D vinculados al oficio"); }
 }
 async function abrir(o) {
   item = JSON.parse(JSON.stringify(o)); confirmar = ""; dirty = false;
@@ -236,7 +260,8 @@ function filaGuardar() {
   const x = item, f = firmantes.find((y) => y.id === x.firmante_id);
   return { obra_id: obraId, destinatario_titulo: x.destinatario_titulo.trim(), destinatario_nombre: x.destinatario_nombre.trim(), destinatario_cargo: x.destinatario_cargo.trim(),
     destinatario_institucion: x.destinatario_institucion.trim(), asunto: x.asunto.trim(), referencia: x.referencia.trim(), cuerpo: x.cuerpo.trim(), anexos: x.anexos.trim(),
-    con_copia: x.con_copia.trim(), requiere_respuesta: !!x.requiere_respuesta, plazo_respuesta: x.requiere_respuesta ? x.plazo_respuesta || null : null, firmante_id: f ? f.id : null };
+    con_copia: x.con_copia.trim(), requiere_respuesta: !!x.requiere_respuesta, plazo_respuesta: x.requiere_respuesta ? x.plazo_respuesta || null : null, firmante_id: f ? f.id : null,
+    elementos: x.elementos || [], elementos_resumen: x.elementos_resumen || null, elementos_niveles: x.elementos_niveles || null };
 }
 async function guardar() {
   const row = filaGuardar();
@@ -277,7 +302,8 @@ async function claude(modo) {
     const x = item;
     const r = await api("accion=redactar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       obra: obraId, modo, idea, cuerpo: cu.value, tono: $("#tono").value, asunto: x.asunto, referencia: x.referencia,
-      destinatario: [x.destinatario_titulo, x.destinatario_nombre].filter(Boolean).join(" "), cargo: x.destinatario_cargo, institucion: x.destinatario_institucion }) });
+      destinatario: [x.destinatario_titulo, x.destinatario_nombre].filter(Boolean).join(" "), cargo: x.destinatario_cargo, institucion: x.destinatario_institucion,
+      elementos: (x.elementos || []).length ? textoElementos(x) : "" }) });
     const { cuerpo } = await r.json();
     cu.value = cuerpo; item.cuerpo = cuerpo; setDirty(true);
     msg.textContent = "Propuesta de Claude: revísela y complete lo que esté entre corchetes antes de emitir.";
@@ -352,6 +378,7 @@ document.addEventListener("click", async (e) => {
   if (act === "config") return abrirConfig();
   if (act === "redactar" || act === "mejorar") return claude(act);
   if (act === "borrar") { confirmar = "borrar"; return render(); }
+  if (act === "quitarBim") { item.elementos = []; item.elementos_resumen = ""; item.elementos_niveles = ""; setDirty(true); return render(); }
   if (act === "noConf") { confirmar = ""; return render(); }
   if (act === "emitirOk") return emitirOk(b);
   if (act === "borrarOk") {

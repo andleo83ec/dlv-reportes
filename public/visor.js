@@ -17,7 +17,8 @@ const S = {
   hiddenStoreys: new Set(), hiddenCats: new Set(), hiddenStates: new Set(),
   tab: "reg", weight: "vol",
   form: { s: "ej", p: 50, f: hoy(), n: "", fotos: [] },
-  history: new Map()
+  history: new Map(),
+  ofis: new Map(), focoOficio: ""   // oficios vinculados por elemento · oficio a mostrar al abrir (?oficio=)
 };
 let sb = null, user = null, perfil = null, obras = [], obraId = "";
 const $ = s => document.querySelector(s);
@@ -268,6 +269,7 @@ async function cargarObra() {
     } else text = await r.text();
     if (oid !== obraId) return;
     await openText(text, { modelo, fileName: modelo.archivo, title: "Abriendo " + (modelo.nombre || "modelo") });
+    if (oid === obraId) await enfocarOficio();
   } catch (err) {
     setLoading(false);
     showMsg(`<h2>No se pudo abrir el modelo</h2><span>${esc(err.message || "Revisa tu conexión.")}</span><button class="btn" type="button" id="msgRetry">Reintentar</button>`);
@@ -463,6 +465,14 @@ function paneReg() {
     <div class="field"><label>Fotos (${f.fotos.length}/${MAX_FOTOS})</label><div class="thumbs">${f.fotos.map((x, i) => `<span class="thumb"><img data-key="${esc(x.key)}" alt="Foto ${i + 1}"><button class="rm" type="button" data-rmfoto="${i}" aria-label="Quitar foto ${i + 1}">×</button></span>`).join("")}
       ${f.fotos.length < MAX_FOTOS ? `<button class="addph" type="button" id="addFoto" ${subiendo ? "disabled" : ""}>${subiendo ? "Subiendo…" : "+ Foto"}</button>` : ""}</div></div>
     <button class="btn primary" type="button" id="fSave" ${saving || subiendo || S.local ? "disabled" : ""}>${saving ? "Guardando…" : `Registrar en ${els.length === 1 ? "1 elemento" : els.length + " elementos"}`}</button></div>`;
+  h += `<div class="note-card"><h3>Oficio sobre ${els.length === 1 ? "este elemento" : "estos " + els.length + " elementos"}</h3>
+    <p>Abre un oficio nuevo con la selección vinculada: el texto se puede redactar con Claude y, una vez firmado, el oficio se puede volver a ver aquí en el modelo.</p>
+    <div><button class="btn small" type="button" id="mkOficio" ${S.local ? "disabled" : ""}>Crear oficio</button></div></div>`;
+  if (els.length === 1) {
+    const g0 = els[0].guid, ofs = S.ofis.get(g0);
+    if (ofs && ofs.length) h += `<div style="display:grid;gap:4px"><h3>Oficios de este elemento</h3><div class="log">${ofs.map(o => `<a class="entry" href="/oficios?obra=${encodeURIComponent(obraId)}&id=${encodeURIComponent(o.id)}" style="text-decoration:none;color:inherit"><span class="d">${esc(o.codigo || "Borrador")}</span><span class="m" style="font-size:13.5px">${esc(o.asunto || "")}</span><span class="note">${esc({ borrador: "Borrador", pendiente_firma: "Pendiente de firma", firmado: "Firmado", anulado: "Anulado" }[o.estado] || o.estado)}${o.fecha_emision ? " · " + fdate(o.fecha_emision) : ""}</span></a>`).join("")}</div></div>`;
+    if (!S.ofis.has(g0)) loadOficios(g0);
+  }
   if (els.length === 1) {
     const g = els[0].guid;
     const hist = S.history.get(g) || S.regs.filter(r => (r.guids || []).includes(g));
@@ -481,6 +491,40 @@ async function loadHistory(g) {
     S.history.set(g, data || []);
     if (S.sel.has(g) && S.tab === "reg") renderPane();
   } catch (e) { S.history.set(g, []); } finally { histBusy.delete(g); }
+}
+const ofBusy = new Set();
+async function loadOficios(g) {
+  if (ofBusy.has(g) || !obraId) return; ofBusy.add(g);
+  try {
+    const { data, error } = await sb.from("oficios").select("id,codigo,asunto,estado,fecha_emision").eq("obra_id", obraId).contains("elementos", [g]).order("creado", { ascending: false }).limit(10);
+    S.ofis.set(g, error ? [] : data || []);   // si el módulo de oficios no está instalado, no muestra nada
+    if (S.sel.has(g) && S.tab === "reg" && (data || []).length) renderPane();
+  } catch (e) { S.ofis.set(g, []); } finally { ofBusy.delete(g); }
+}
+function crearOficio() {
+  const guids = [...S.sel]; if (!guids.length) return;
+  const els = guids.map(g => S.byGuid.get(g)).filter(Boolean);
+  const obs = els.filter(el => stOf(el.guid).s === "ob");
+  const one = els.length === 1 ? els[0] : null;
+  const nombreEl = one ? (one.name || one.typeName || one.objType || one.cat) : "";
+  let idea = "";
+  if (obs.length) idea = "Informar la observación registrada en " + summaryOf(obs.map(e => e.guid)) + " (" + nivelesOf(obs.map(e => e.guid)) + "): " +
+    [...new Set(obs.map(el => stOf(el.guid).n).filter(Boolean))].join("; ") + ". Solicitar revisión y respuesta.";
+  const datos = { t: Date.now(), obra: obraId, guids, resumen: summaryOf(guids), niveles: nivelesOf(guids), idea,
+    nombre: obs.length ? "Observación en " + (one ? one.cat + " " + nombreEl : summaryOf(obs.map(e => e.guid))) + " · " + nivelesOf(obs.map(e => e.guid)) : "" };
+  try { localStorage.setItem("dlv-oficio-desde-visor", JSON.stringify(datos)); } catch (e) { toast("No se pudo pasar la selección: el navegador no permite guardar datos."); return; }
+  location.href = "/oficios?obra=" + encodeURIComponent(obraId) + "&desde=visor";
+}
+// Abrir el visor desde un oficio (/visor?obra=…&oficio=…): selecciona y enfoca sus elementos
+async function enfocarOficio() {
+  const id = S.focoOficio; if (!id || !S.model) return; S.focoOficio = "";
+  const { data, error } = await sb.from("oficios").select("codigo,asunto,elementos").eq("id", id).maybeSingle();
+  if (error || !data) { toast("No se encontró el oficio."); return; }
+  const gs = (data.elementos || []).filter(g => S.byGuid.has(g));
+  if (!gs.length) { toast("Los elementos de ese oficio no están en este modelo."); return; }
+  S.hiddenStoreys = new Set(); S.hiddenCats = new Set(); S.hiddenStates = new Set(); applyVisibility();
+  setSel(gs); fitView(gs.map(g => S.byGuid.get(g).mesh)); setTab("reg");
+  toast((data.codigo || "Borrador") + ": " + gs.length + (gs.length === 1 ? " elemento" : " elementos"));
 }
 function renderProps() {
   const box = $("#propsBox"); if (!box || S.sel.size !== 1) return;
@@ -544,6 +588,7 @@ function bindPane() {
   const af = $("#addFoto"); if (af) af.onclick = () => $("#fotoIn").click();
   q("[data-rmfoto]").forEach(b => b.onclick = () => { S.form.fotos.splice(Number(b.dataset.rmfoto), 1); renderPane(); });
   const sm = $("#saveModel"); if (sm) sm.onclick = guardarModelo;
+  const mo = $("#mkOficio"); if (mo) mo.onclick = crearOficio;
   const nm = $("#newModel"); if (nm) nm.onclick = () => $("#fileIn").click();
   q("[data-w]").forEach(b => b.onclick = () => { S.weight = b.dataset.w; renderPane(); });
   q("[data-cm]").forEach(b => b.onclick = () => { S.colorMode = b.dataset.cm; paintAll(); renderLegend(); renderPane(); });
@@ -586,7 +631,7 @@ function renderObras() {
   const s = $("#obraSel");
   s.innerHTML = obras.length ? obras.map(o => `<option value="${esc(o.id)}"${o.id === obraId ? " selected" : ""}>${esc(o.nombre)}</option>`).join("") : `<option value="">Sin obras asignadas</option>`;
 }
-$("#obraSel").addEventListener("change", e => { obraId = e.target.value; S.form.fotos = []; cargarObra(); });
+$("#obraSel").addEventListener("change", e => { obraId = e.target.value; S.form.fotos = []; S.ofis = new Map(); S.focoOficio = ""; cargarObra(); });
 async function boot() {
   if (ls.get("avance.dim") === "0") { S.dim = false; $("#tDim").setAttribute("aria-pressed", "false"); }
   initViewer();
@@ -605,7 +650,9 @@ async function boot() {
   const { data, error } = await sb.from("obras").select("id,nombre").eq("activa", true).order("nombre");
   if (error) { showMsg(`<h2>No se pudieron cargar las obras</h2><span>Revisa tu conexión y recarga.</span>`); return; }
   obras = data || [];
-  const want = new URLSearchParams(location.search).get("obra") || ls.get("dlv-obra") || "";
+  const qs = new URLSearchParams(location.search);
+  S.focoOficio = qs.get("oficio") || "";
+  const want = qs.get("obra") || ls.get("dlv-obra") || "";
   obraId = (obras.find(o => o.id === want) || obras[0] || {}).id || "";
   renderObras();
   await cargarObra();

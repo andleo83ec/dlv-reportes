@@ -1531,6 +1531,12 @@ create table if not exists public.oficios (
   unique (obra_id, numero)
 );
 create index if not exists oficios_obra on public.oficios (obra_id, numero desc);
+
+-- Vínculo con el visor 3D (modelo IFC): elementos a los que se refiere el oficio
+alter table public.oficios add column if not exists elementos text[] not null default '{}';   -- GUID del IFC
+alter table public.oficios add column if not exists elementos_resumen text;                   -- "4 Columna, 2 Viga"
+alter table public.oficios add column if not exists elementos_niveles text;                   -- "Nivel 3, Nivel 4"
+create index if not exists oficios_elementos on public.oficios using gin (elementos);
 create index if not exists oficios_firmante on public.oficios (firmante_id, estado);
 
 create table if not exists public.oficio_eventos (

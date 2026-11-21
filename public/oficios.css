@@ -44,3 +44,5 @@ textarea.cuerpo{min-height:260px;line-height:1.55}
 .firm-row .who{display:flex;flex-direction:column;min-width:0;align-self:center}
 .firm-row .who small{color:var(--muted);font-size:.76rem;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:560px){.firm-row{grid-template-columns:auto minmax(0,1fr)}.firm-row .fld{grid-column:1/-1}}
+.bimlink{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--line);border-radius:var(--rs);background:var(--soft);font-size:.86rem}
+.rep.of .b3d{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;background:var(--ink);color:var(--surface);font-family:var(--body);font-size:.64rem;font-weight:600;vertical-align:1px}

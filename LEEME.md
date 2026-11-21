@@ -120,7 +120,8 @@ El portal avisa cuando hay RDI sin respuesta o acuerdos de actas fuera de plazo.
 4. **Redactar:** cualquier miembro de la obra crea el oficio, escribe la idea y toca **Redactar** (o **Mejorar texto**); revisa el texto y elige quién firma. Los borradores solo los ven su autor y los administradores.
 5. **Emitir:** asigna el número siguiente de la obra (`DLV-TUR-OF-014-2026`) sin repetir ni saltar aunque dos personas emitan a la vez. Es el mismo correlativo que la correspondencia enviada de `/rdi`: el oficio aparece allí como **OF-014**. Emitido ya no se edita; si hay un error se **anula** y el número queda registrado.
 6. **Firmar:** el firmante ejecuta el agente en su computadora (`agente-oficios/`, ver su README). Llena la plantilla Word, la convierte a PDF, la firma con su certificado `.p12` de Security Data (PAdES con pyHanko) y pone el sello con el **código QR**. El PDF y el Word quedan en R2, en `obras/<obra>/oficios/`. La clave del certificado nunca sale de su computadora.
-7. **Verificar:** el QR abre `/v/<código>`, una página pública con el estado (válido, pendiente o anulado), quién firmó, la fecha y la huella SHA‑256; quien recibió el PDF puede comprobar ahí que no fue alterado.
+7. **Desde el visor 3D:** selecciona uno o varios elementos del modelo IFC (columnas, vigas, losas…) y toca **Crear oficio**. El oficio nuevo llega con los elementos vinculados, la referencia al modelo y, si están **observados**, la observación lista para que Claude la redacte. Desde el oficio, **Ver en el modelo 3D** abre el visor con esos elementos seleccionados, y al tocar un elemento en el visor aparecen sus oficios.
+8. **Verificar:** el QR abre `/v/<código>`, una página pública con el estado (válido, pendiente o anulado), quién firmó, la fecha y la huella SHA‑256; quien recibió el PDF puede comprobar ahí que no fue alterado.
 
 ## Tablero gerencial (`/tablero`)
 

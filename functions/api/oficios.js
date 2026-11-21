@@ -2,7 +2,7 @@
 // Todas las llamadas llevan  Authorization: Bearer <token de Supabase>  y se validan con las reglas RLS
 // del propio usuario (no se usa la clave de servicio).
 //
-//   POST /api/oficios?accion=redactar                     JSON {obra, modo, idea, cuerpo, destinatario, cargo, institucion, asunto, referencia, tono}
+//   POST /api/oficios?accion=redactar                     JSON {obra, modo, idea, cuerpo, destinatario, cargo, institucion, asunto, referencia, elementos, tono}
 //   GET  /api/oficios?accion=plantilla&obra=<id>          → plantilla .docx de la obra (o la general)
 //   POST /api/oficios?accion=plantilla&obra=<id>|general=1   cuerpo: el .docx  (solo administradores)
 //   GET  /api/oficios?accion=archivo&id=<oficio>&tipo=pdf|docx
@@ -67,6 +67,7 @@ async function redactar(request, env, tok) {
     `Obra: ${ob.nombre} — Cliente: ${ob.cliente || ""} — Ubicación: ${ob.ubicacion || ""}`,
     `Destinatario: ${c(d.destinatario)} — Cargo: ${c(d.cargo)} — Institución: ${c(d.institucion)}`,
     `Asunto: ${c(d.asunto)}`, d.referencia ? `Referencia: ${c(d.referencia)}` : "",
+    d.elementos ? `Elementos del modelo 3D (IFC) a los que se refiere: ${c(d.elementos, 600)}` : "",
     `Tono: ${["firme", "cordial", "urgente"].includes(d.tono) ? d.tono : "formal estándar"}`,
   ].filter(Boolean).join("\n");
   const pedido = d.modo === "mejorar"
