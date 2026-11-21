@@ -10,6 +10,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `/planillas` | Estado de pago: presupuesto por obra y planillas al mandante con PDF |
 | `/subcontratos` | Subcontratos y garantías: contratos, planillas de subcontratistas, pólizas y evaluación |
 | `/rdi` | RDI, actas de reunión con seguimiento de acuerdos y registro de correspondencia |
+| `/oficios` | Oficios numerados por obra con la plantilla DLV, redacción con Claude, firma electrónica y verificación por QR |
 | `/tablero` | Tablero gerencial de todas las obras e informe semanal en PDF |
 | `/ciclo` | Inicio y cierre de obra: listas de arranque y cierre, recepción, balance final y encuesta al cliente |
 | `/costos` | Control de costos por obra: gastos reales, presupuesto meta, margen a la fecha y proyectado, caja |
@@ -23,6 +24,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 |---|---|---|
 | `public/` | La app (pantallas, PDF, íconos) | Cloudflare Pages la publica |
 | `functions/api/` | Funciones del servidor (configuración, fotos y modelos IFC) | Cloudflare Pages las ejecuta |
+| `agente-oficios/` | Agente de firma de oficios (Python + pyHanko) y plantilla Word | En la computadora de cada firmante |
 | `worker/` | Servicio **dlv-integraciones**: correo de facturas, consultas al SRI y WhatsApp | Un Worker aparte en Cloudflare (ver más abajo) |
 | `supabase/instalar_todo.sql` | **Todo junto, en orden** (base + todos los módulos) | Se pega una sola vez en Supabase → SQL Editor; se puede repetir sin perder datos |
 | `supabase/schema.sql` | Tablas, usuarios y permisos | Se pega una vez en Supabase → SQL Editor |
@@ -30,6 +32,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/planillas.sql` | Presupuesto (rubros) y planillas del estado de pago | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/subcontratos.sql` | Subcontratos, sus planillas y garantías | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/rdi.sql` | RDI, actas y correspondencia | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
+| `supabase/oficios.sql` | Oficios, firma y verificación por QR | Se pega una vez en Supabase → SQL Editor, después de `rdi.sql` |
 | `supabase/tablero.sql` | Activa el tablero en el menú (no crea tablas) | Se pega una vez en Supabase → SQL Editor |
 | `supabase/propuestas.sql` | Propuestas y cotizaciones (solo administradores) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/ciclo.sql` | Inicio y cierre de obra | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
@@ -108,6 +111,16 @@ Los montos se escriben como en Ecuador: `3.096` es tres mil noventa y seis y `1,
 5. **Oficios:** registro de correspondencia enviada (OF-001…) y recibida (REC-001…), con plazo cuando espera respuesta y dónde está el original.
 
 El portal avisa cuando hay RDI sin respuesta o acuerdos de actas fuera de plazo.
+
+## Oficios (`/oficios`)
+
+1. En Supabase → SQL Editor, ejecuta `supabase/oficios.sql` (activa también el programa en el menú). Si usas `instalar_todo.sql`, ya está incluido.
+2. En Cloudflare → `dlv-plataforma` → Settings → Variables and Secrets agrega el secreto **`ANTHROPIC_API_KEY`** (para redactar con Claude). Opcional: `ANTHROPIC_MODEL` (por defecto `claude-sonnet-5-5`) y `VERIFICACION_PDF_PUBLICO = no` si el QR no debe mostrar el PDF.
+3. Un administrador entra a **Oficios → Configuración**: asigna el **código** de la obra (TUR, GSAL…), sube `agente-oficios/plantilla_oficio_dlv.docx` como **plantilla general** y marca quién **puede firmar** (con título y cargo).
+4. **Redactar:** cualquier miembro de la obra crea el oficio, escribe la idea y toca **Redactar** (o **Mejorar texto**); revisa el texto y elige quién firma. Los borradores solo los ven su autor y los administradores.
+5. **Emitir:** asigna el número siguiente de la obra (`DLV-TUR-OF-014-2026`) sin repetir ni saltar aunque dos personas emitan a la vez. Es el mismo correlativo que la correspondencia enviada de `/rdi`: el oficio aparece allí como **OF-014**. Emitido ya no se edita; si hay un error se **anula** y el número queda registrado.
+6. **Firmar:** el firmante ejecuta el agente en su computadora (`agente-oficios/`, ver su README). Llena la plantilla Word, la convierte a PDF, la firma con su certificado `.p12` de Security Data (PAdES con pyHanko) y pone el sello con el **código QR**. El PDF y el Word quedan en R2, en `obras/<obra>/oficios/`. La clave del certificado nunca sale de su computadora.
+7. **Verificar:** el QR abre `/v/<código>`, una página pública con el estado (válido, pendiente o anulado), quién firmó, la fecha y la huella SHA‑256; quien recibió el PDF puede comprobar ahí que no fue alterado.
 
 ## Tablero gerencial (`/tablero`)
 

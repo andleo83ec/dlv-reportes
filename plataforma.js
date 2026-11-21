@@ -6,8 +6,10 @@ import * as documentos from "./functions/api/documentos.js";
 import * as fotos from "./functions/api/fotos.js";
 import * as modelos from "./functions/api/modelos.js";
 import * as integra from "./functions/api/integra/[[ruta]].js";
+import * as oficios from "./functions/api/oficios.js";
+import * as verificar from "./functions/v/[[ruta]].js";
 
-const rutas = { "/api/config": config, "/api/documentos": documentos, "/api/fotos": fotos, "/api/modelos": modelos };
+const rutas = { "/api/config": config, "/api/documentos": documentos, "/api/fotos": fotos, "/api/modelos": modelos, "/api/oficios": oficios };
 
 function manejador(mod, metodo) {
   const m = metodo.charAt(0) + metodo.slice(1).toLowerCase();
@@ -21,6 +23,7 @@ export default {
     let mod = null, params = {};
     if (rutas[p]) mod = rutas[p];
     else if (p === "/api/integra" || p.startsWith("/api/integra/")) { mod = integra; params = { ruta: p.slice("/api/integra/".length).split("/").filter(Boolean) }; }
+    else if (p.startsWith("/v/")) { mod = verificar; params = { ruta: p.slice(3).split("/").filter(Boolean) }; }   // verificación de oficios (QR)
     if (mod) {
       const h = manejador(mod, request.method);
       if (!h) return new Response("Método no permitido", { status: 405 });

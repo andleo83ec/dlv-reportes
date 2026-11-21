@@ -1,0 +1,46 @@
+/* Oficios: lista con código y estado, editor con caja de Claude, vista previa en hoja A4 y sello con QR */
+.pill.of-borrador{background:var(--soft);color:var(--muted)}
+.pill.of-pendiente_firma{background:var(--warn-bg);color:var(--warn)}
+.pill.of-firmado{background:var(--ok-bg,#e3f1e6);color:var(--ok,#1e6b34)}
+.pill.of-anulado{background:var(--bad-bg);color:var(--bad)}
+.rep.of .cod{font-family:var(--mono);font-size:.78rem;color:var(--navy);white-space:nowrap}
+.rep.of .cod.sin{font-style:italic;color:var(--muted)}
+.claudebox{border:1px solid color-mix(in srgb,var(--warn) 30%,var(--line));background:color-mix(in srgb,var(--warn-bg) 60%,var(--surface));border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.claudebox b{font-size:.92rem}
+.claudebox .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.claudebox select{width:auto}
+.claudebox .msg{font-size:.8rem;color:var(--muted);min-height:1em}
+textarea.cuerpo{min-height:260px;line-height:1.55}
+.ofdet{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:16px;align-items:start}
+@media (max-width:640px){.ofdet{grid-template-columns:minmax(0,1fr)}}
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.qrbox .qr{background:#fff;padding:8px;border-radius:10px;line-height:0}
+.qrbox .qr img,.qrbox .qr canvas{width:150px!important;height:150px!important}
+.qrbox small{font-size:.72rem;color:var(--muted);word-break:break-all}
+.kvof{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 12px;font-size:.9rem;margin:0}
+.kvof dt{color:var(--muted)} .kvof dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.kvof .hash{font-family:var(--mono);font-size:.74rem}
+@media (max-width:480px){.kvof{grid-template-columns:minmax(0,1fr)}.kvof dt{margin-top:4px}}
+.acts-row{display:flex;gap:8px;flex-wrap:wrap}
+.hist{width:100%;border-collapse:collapse;font-size:.84rem}
+.hist td{padding:7px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.hist td:first-child{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+/* hoja A4 de vista previa (refleja la plantilla Word) */
+.hojawrap{background:var(--soft);border-radius:var(--r);padding:14px;overflow-x:auto}
+.hoja{background:#fff;color:#1b222b;max-width:560px;margin:0 auto;min-height:780px;padding:46px 50px 30px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.45;box-shadow:0 1px 4px rgba(0,0,0,.15);display:flex;flex-direction:column;position:relative}
+.hoja .hc{border-bottom:2px solid #1d2a3a;padding-bottom:5px}
+.hoja .hc b{font-size:16px;color:#1d2a3a} .hoja .hc b span{font-size:8px;color:#b8892e;margin-left:4px}
+.hoja .hc small{display:block;font-size:8px;color:#6b7280}
+.hoja .hp{text-align:right;font-size:7.5px;color:#6b7280;margin:3px 0 16px}
+.hoja .der{text-align:right} .hoja .cod{font-weight:700;color:#1d2a3a;margin-bottom:16px}
+.hoja p{margin:0 0 8px;text-align:justify}
+.hoja .fir{min-height:66px;margin-top:8px;display:flex;align-items:center}
+.hoja .fir .ph{font-size:8px;color:#9aa3ad;border:1px dashed #c9ced4;padding:16px 10px}
+.hoja .fir .sello{display:flex;gap:8px;align-items:center;border-left:2px solid #b8892e;padding-left:8px;font-size:8px}
+.hoja .fir .sello .q{width:58px;height:58px;line-height:0}.hoja .fir .sello .q img,.hoja .fir .sello .q canvas{width:58px!important;height:58px!important}
+.hoja .pie{margin-top:auto;border-top:1px solid #b8892e;padding-top:4px;text-align:center;font-size:7.5px;color:#6b7280}
+.hoja .anul{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:60px;font-weight:700;color:rgba(180,35,35,.22);transform:rotate(-18deg);pointer-events:none;letter-spacing:.08em}
+.firm-row{display:grid;grid-template-columns:auto minmax(0,1.2fr) minmax(0,.6fr) minmax(0,1.2fr);gap:8px;align-items:end;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r)}
+.firm-row .who{display:flex;flex-direction:column;min-width:0;align-self:center}
+.firm-row .who small{color:var(--muted);font-size:.76rem;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){.firm-row{grid-template-columns:auto minmax(0,1fr)}.firm-row .fld{grid-column:1/-1}}

@@ -1,0 +1,12 @@
+{
+  "supabase_url": "https://upmwlplekapaigwbjqrt.supabase.co",
+  "supabase_anon_key": "COPIE-AQUI-LA-SUPABASE_ANON_KEY-DE-wrangler.toml",
+  "app_url": "https://SU-PLATAFORMA-DLV",
+  "email": "SU-CORREO@dominio.com",
+  "certificado_p12": "C:/Firmas/mi_firma_security_data.p12",
+  "tsa_url": "",
+  "conversor": "auto",
+  "soffice": "",
+  "carpeta_local": "C:/DLV/Oficios",
+  "caja_firma_respaldo": { "pagina": -1, "x": 72, "y": 100, "ancho": 300, "alto": 66 }
+}

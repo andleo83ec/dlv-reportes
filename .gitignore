@@ -1,0 +1,4 @@
+agente-oficios/config.json
+*.p12
+*.pfx
+__pycache__/

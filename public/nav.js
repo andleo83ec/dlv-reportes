@@ -11,6 +11,7 @@
     planilla: '<path d="M4 4h16v16H4z"/><path d="M4 9h16M4 14h16M10 9v11"/>',
     sub: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.2 6-5.2s5.4 1.8 6 5.2"/><path d="M16 4.5a3 3 0 0 1 0 6M18 14.8c1.6.7 2.6 2.4 3 5.2"/>',
     rdi: '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>',
+    oficio: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h4"/><path d="m14.5 18.5 1.5 1.5 3-3"/>',
     ciclo: '<path d="M4 20V4"/><path d="M4 4h12l-2 4 2 4H4"/>',
     costos: '<path d="M3 20h18"/><path d="M6 16V9M11 16V5M16 16v-4M21 16V8"/>',
     compras: '<path d="M3 4h2l2.4 11h11L21 7H6.2"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
@@ -22,7 +23,7 @@
   };
   const GRUPOS = [
     { h: "", it: [["/", "Inicio", "inicio"], ["/tablero", "Tablero", "tablero"]] },
-    { h: "Obra", it: [["/reportes", "Reporte diario", "reporte"], ["/visor", "Visor 3D y avance", "visor"], ["/planillas", "Estado de pago", "planilla"], ["/subcontratos", "Subcontratos", "sub"], ["/rdi", "RDI y actas", "rdi"], ["/ciclo", "Inicio y cierre", "ciclo"]] },
+    { h: "Obra", it: [["/reportes", "Reporte diario", "reporte"], ["/visor", "Visor 3D y avance", "visor"], ["/planillas", "Estado de pago", "planilla"], ["/subcontratos", "Subcontratos", "sub"], ["/rdi", "RDI y actas", "rdi"], ["/oficios", "Oficios", "oficio"], ["/ciclo", "Inicio y cierre", "ciclo"]] },
     { h: "Gestión", it: [["/costos", "Control de costos", "costos"], ["/compras", "Compras", "compras"], ["/facturas", "Facturas SRI", "facturas", true], ["/personal", "Personal", "personal"], ["/documentos", "Documentos", "docs"]] },
     { h: "Comercial", it: [["/propuestas", "Propuestas", "propuestas", true]] }
   ];
