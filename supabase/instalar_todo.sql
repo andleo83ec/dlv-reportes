@@ -1524,13 +1524,14 @@ create table if not exists public.oficios (
   hash_sha256               text,
   certificado_info          text,
   correspondencia_id        uuid references public.correspondencia(id) on delete set null,
-  token_verificacion        text not null unique default encode(gen_random_bytes(16), 'hex'),
+  token_verificacion        text not null unique default replace(gen_random_uuid()::text, '-', ''),
   motivo_anulacion          text,
   creado                    timestamptz not null default now(),
   actualizado               timestamptz not null default now(),
   unique (obra_id, numero)
 );
 create index if not exists oficios_obra on public.oficios (obra_id, numero desc);
+alter table public.oficios alter column token_verificacion set default replace(gen_random_uuid()::text, '-', '');
 
 -- Vínculo con el visor 3D (modelo IFC): elementos a los que se refiere el oficio
 alter table public.oficios add column if not exists elementos text[] not null default '{}';   -- GUID del IFC
@@ -1573,7 +1574,7 @@ begin
     new.numero := null; new.codigo := null; new.estado := 'borrador';
     new.pdf_key := null; new.docx_key := null; new.hash_sha256 := null; new.certificado_info := null;
     new.fecha_emision := null; new.emitido_en := null; new.firmado_en := null; new.correspondencia_id := null;
-    new.token_verificacion := encode(gen_random_bytes(16), 'hex');
+    new.token_verificacion := replace(gen_random_uuid()::text, '-', '');
     new.autor_id := coalesce(auth.uid(), new.autor_id);
     new.autor_nombre := public.nombre_perfil(new.autor_id);
   elsif new.numero is distinct from old.numero or new.codigo is distinct from old.codigo
