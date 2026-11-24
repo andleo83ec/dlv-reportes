@@ -1,0 +1,18 @@
+{
+  "appId": "ec.dlv.plataforma",
+  "appName": "DLV",
+  "webDir": "www",
+  "server": {
+    "url": "https://dlv-plataforma.aleon-181.workers.dev",
+    "androidScheme": "https",
+    "errorPath": "sin-conexion.html"
+  },
+  "android": {
+    "backgroundColor": "#f4f4f5",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "backgroundColor": "#f4f4f5",
+    "contentInset": "never"
+  }
+}

@@ -1,0 +1,66 @@
+# Arma la app DLV para Android (Capacitor) y la deja para descargar en
+# GitHub → Releases → "App Android (última)" → DLV.apk
+# Corre sola cuando cambia la carpeta app/ y también a mano: Actions → "App Android" → Run workflow.
+# La app abre la plataforma publicada, así que los cambios de pantallas NO necesitan una app nueva.
+name: App Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["app/**", ".github/workflows/app-android.yml", "public/icon-512.png", "public/icon-maskable-512.png"]
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Instalar Capacitor
+        working-directory: app
+        run: npm install --no-audit --no-fund
+      - name: Crear proyecto Android
+        working-directory: app
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Permisos, nombre e íconos
+        working-directory: app/android/app/src/main
+        run: |
+          set -e
+          # cámara para fotos del reporte y guías (el selector de archivos la ofrece)
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />#' AndroidManifest.xml
+          grep -q CAMERA AndroidManifest.xml
+          command -v convert >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick)
+          ICON=$GITHUB_WORKSPACE/public/icon-512.png
+          FG=$GITHUB_WORKSPACE/public/icon-maskable-512.png
+          for d in mdpi:48:108 hdpi:72:162 xhdpi:96:216 xxhdpi:144:324 xxxhdpi:192:432; do
+            IFS=: read n s f <<< "$d"
+            convert "$ICON" -resize ${s}x${s} res/mipmap-$n/ic_launcher.png
+            convert "$ICON" -resize ${s}x${s} res/mipmap-$n/ic_launcher_round.png
+            # ícono adaptable: el dibujo ocupa la zona segura (66 de 108)
+            convert "$FG" -resize $((f*72/108))x$((f*72/108)) -background "#18181b" -gravity center -extent ${f}x${f} res/mipmap-$n/ic_launcher_foreground.png
+          done
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#18181B</color>\n</resources>\n' > res/values/ic_launcher_background.xml
+      - name: Compilar APK
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -q
+          cp app/build/outputs/apk/debug/app-debug.apk $GITHUB_WORKSPACE/DLV.apk
+          ls -la $GITHUB_WORKSPACE/DLV.apk
+      - name: Publicar para descargar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android-ultima >/dev/null 2>&1 || gh release create android-ultima --title "App Android (última)" --notes "App DLV para Android. Descarga DLV.apk desde el teléfono e instálala (permite instalar desde esta fuente cuando Android lo pida)." --prerelease
+          gh release upload android-ultima DLV.apk --clobber
+          gh release edit android-ultima --notes "App DLV para Android · versión del $(date -u +'%Y-%m-%d %H:%M') UTC · commit ${GITHUB_SHA::7}. Descarga DLV.apk desde el teléfono e instálala (permite instalar desde esta fuente cuando Android lo pida)."

@@ -105,9 +105,41 @@
     location.href = "/";
   }
 
+
+  /* ---------- Dentro de la app nativa (Android / iPhone con Capacitor) ---------- */
+  const nativo = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  async function compartirArchivo(file) {
+    const P = window.Capacitor.Plugins;
+    const b64 = await new Promise((ok, mal) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(",")[1]); fr.onerror = mal; fr.readAsDataURL(file); });
+    const nombre = (file.name || "archivo").replace(/[\\/:*?"<>|]+/g, "_");
+    const w = await P.Filesystem.writeFile({ path: nombre, data: b64, directory: "CACHE" });
+    await P.Share.share({ title: nombre, files: [w.uri], dialogTitle: "Compartir o guardar" });
+  }
+  if (nativo()) {
+    document.documentElement.classList.add("app-nativa");
+    // Los PDF se comparten (WhatsApp, correo, Drive, Archivos…) con la hoja nativa del teléfono
+    navigator.canShare = (d) => !!(d && ((d.files && d.files.length) || d.url || d.text));
+    navigator.share = async (d) => {
+      if (d && d.files && d.files.length) return compartirArchivo(d.files[0]);
+      return window.Capacitor.Plugins.Share.share({ title: d && d.title, text: d && d.text, url: d && d.url });
+    };
+    // Descargas con <a download> (jsPDF, CSV…): el visor web no descarga, se comparte el archivo
+    const bajar = (a) => {
+      const href = a.getAttribute("href") || "";
+      if (!a.hasAttribute("download") || !/^(blob:|data:)/.test(href)) return false;
+      fetch(href).then((r) => r.blob()).then((b) => compartirArchivo(new File([b], a.getAttribute("download") || "archivo", { type: b.type }))).catch(() => {});
+      return true;
+    };
+    const clickOrig = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () { if (!bajar(this)) return clickOrig.call(this); };
+    const dispOrig = HTMLAnchorElement.prototype.dispatchEvent;
+    HTMLAnchorElement.prototype.dispatchEvent = function (ev) { if (ev && ev.type === "click" && bajar(this)) return false; return dispOrig.call(this, ev); };
+    document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest("a[download]"); if (a && bajar(a)) e.preventDefault(); }, true);
+  }
+
   /* ---------- App instalable: funciona sin señal, avisos en el teléfono ---------- */
   const esIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const instalada = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const instalada = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true || nativo();
   let swReg = null;
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").then((r) => { swReg = r; estadoAvisos(); }).catch(() => {});
@@ -150,6 +182,7 @@
   }
   const b64aBytes = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
   async function activarAvisos() {
+    if (nativo()) return aviso("En la app, los avisos llegarán con la próxima versión. Por ahora se reciben desde la versión web instalada.", 6000);
     if (esIOS && !instalada) return aviso("Para recibir avisos en el iPhone, primero agrega DLV a la pantalla de inicio (Safari → Compartir → Agregar a pantalla de inicio) y ábrela desde ese ícono.", 9000);
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return aviso("Este navegador no permite avisos.", 5000);
     const s = sesion(); if (!s || !s.access_token) return aviso("Inicia sesión primero.", 4000);
