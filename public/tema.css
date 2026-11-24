@@ -115,3 +115,16 @@ table th{font-weight:500}
 .top a.btn[href="/"].sb-menu{gap:8px}
 .top a.btn[href="/"].sb-menu svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
 @media (max-width:1023.98px){body.con-side .top #quien{display:none}}
+
+/* App instalable: avisos, sin conexión, sugerencia de instalar */
+.side .sb-out.on{color:var(--ok)}
+.side .sb-out.on svg{fill:color-mix(in srgb,var(--ok) 25%,transparent)}
+.dlv-aviso{position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));max-width:min(440px,calc(100% - 32px));
+  background:var(--ink);color:var(--surface);padding:11px 14px;border-radius:12px;font-size:.88rem;line-height:1.35;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.dlv-red{position:sticky;top:0;z-index:30;margin:0 -16px 8px;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px;background:var(--warn-bg);color:var(--warn);font-size:.82rem;font-weight:500;text-align:center;border-bottom:1px solid var(--line)}
+.dlv-instalar{position:fixed;z-index:35;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:4px;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 40px 14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.12);font-size:.86rem;color:var(--muted)}
+.dlv-instalar>b{color:var(--ink);font-size:.95rem}
+.dlv-instalar button{position:absolute;top:8px;right:8px;border:0;background:var(--soft);color:var(--muted);width:28px;height:28px;border-radius:99px;font-size:1.1rem;line-height:1}
+.sb-campana svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:1024px){body.con-side .sb-campana{display:none}}

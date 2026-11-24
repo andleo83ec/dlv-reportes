@@ -41,6 +41,7 @@ Plataforma web interna de DLV Construcciones: portal de inicio con el menú de p
 | `supabase/documentos.sql` | Control de documentos | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 | `supabase/compras.sql` | Compras | Se pega una vez en Supabase → SQL Editor, después de `costos.sql`. Reemplaza los permisos de `002_compras.sql` del módulo dlv-compras |
 | `supabase/integraciones.sql` | Facturas por correo y pedidos por WhatsApp | Se pega una vez en Supabase → SQL Editor, después de `compras.sql` |
+| `supabase/avisos.sql` | Avisos en el celular (notificaciones) | Se pega una vez en Supabase → SQL Editor, después de `oficios.sql` |
 | `supabase/avance_bim.sql` | Tablas del visor 3D (modelos y avance por elemento) | Se pega una vez en Supabase → SQL Editor, después de `schema.sql` |
 
 ## Instalar como Worker (recomendado)
@@ -205,4 +206,10 @@ Juntan en la plataforma los módulos **dlv-facturas** y **dlv-compras/WhatsApp**
 7. **En la plataforma:** Compras → pestaña **WhatsApp**: agrega los números autorizados (residentes) y los nombres cortos de cada obra («turi», «casa ejemplo»). Un mensaje como «Pedido Turi / 20 sacos cemento / 2 m3 arena / Urgente», una nota de voz o la foto de una lista crea un **pedido de obra por aprobar**. Al aprobar, pasar a cotización o rechazar, el residente recibe el aviso por WhatsApp (si pasaron más de 24 h desde su último mensaje, Meta no deja escribirle sin plantilla y la plataforma lo indica). También puede consultar «estado» o confirmar «recibido OC-2026-0012» con la foto de la guía.
 8. **Facturas SRI** (`/facturas`): las que llegan quedan **por asignar** con la obra sugerida (por proveedor o por las reglas de palabras). Al asignarlas entran como gasto en Control de costos, o se vinculan a una orden de compra abierta; las de oficina se marcan "No es de obra". Las notas de crédito restan. En **Conciliar** se sube el TXT de *Comprobantes recibidos* del SRI para traer las que no llegaron por correo. Una factura asignada aquí no se duplica si luego se registra en la orden de Compras.
 9. Si el Worker no está configurado, las pantallas siguen funcionando con lo que ya está en la base y lo indican.
+
+## App en el teléfono y avisos
+
+La plataforma se instala como app: en el iPhone, Safari → **Compartir → Agregar a pantalla de inicio** (en Android, Chrome ofrece **Instalar**). Abre a pantalla completa, con el ícono de DLV, y con mala señal muestra lo último que se cargó (`public/sw.js`); sin conexión no se guardan cambios.
+
+**Avisos (notificaciones):** ejecuta `supabase/avisos.sql`. Cada persona, desde la app instalada, toca la **campana** al pie del menú lateral y acepta el permiso. Avisa de: pedido de obra por aprobar (a los administradores), orden emitida por recibir (a los residentes de la obra) y oficio por firmar (al firmante). Las claves del servicio de avisos se crean solas en R2 (`_sistema/vapid.json`); no hay que configurar nada en Cloudflare. En el iPhone hace falta iOS 16.4 o posterior y abrir la app desde el ícono de la pantalla de inicio.
 

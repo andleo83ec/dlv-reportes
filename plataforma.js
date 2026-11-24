@@ -7,9 +7,10 @@ import * as fotos from "./functions/api/fotos.js";
 import * as modelos from "./functions/api/modelos.js";
 import * as integra from "./functions/api/integra/[[ruta]].js";
 import * as oficios from "./functions/api/oficios.js";
+import * as push from "./functions/api/push.js";
 import * as verificar from "./functions/v/[[ruta]].js";
 
-const rutas = { "/api/config": config, "/api/documentos": documentos, "/api/fotos": fotos, "/api/modelos": modelos, "/api/oficios": oficios };
+const rutas = { "/api/config": config, "/api/documentos": documentos, "/api/fotos": fotos, "/api/modelos": modelos, "/api/oficios": oficios, "/api/push": push };
 
 function manejador(mod, metodo) {
   const m = metodo.charAt(0) + metodo.slice(1).toLowerCase();
